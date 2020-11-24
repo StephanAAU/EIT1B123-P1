@@ -1,5 +1,5 @@
-// My mac: 24:62:AB:D7:5A:28
-// 
+// Slave device software
+// My MAC: 24:62:AB:D7:5A:28
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -23,14 +23,14 @@ typedef struct masterData {
     float ypos;
 } masterData;
 
-
-// Create a slaveData called myData
-slaveData myData;
+// Create a slaveData called sendData to handle outgoing data.
 slaveData sendData;
-
+// Create a masterdData called recvData to handle incomming data.
+masterData recvData;
 // Variable to store if sending data was successful
 String success;
 
+// Callback funktion der bruges til at sende data.
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
@@ -42,46 +42,34 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   }
 }
 
-// callback function that will be executed when data is received
+// Callback funktion der bruges til at modtage data.
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-  Serial.println("OnDataRecv:");
-  memcpy(&myData, incomingData, sizeof(myData));
+  memcpy(&recvData, incomingData, sizeof(recvData));
   Serial.print("Bytes received: ");
   Serial.println(len);
-  Serial.print("Char: ");
-  Serial.println(myData.a);
-  Serial.print("Int: ");
-  Serial.println(myData.b);
-  Serial.print("Float: ");
-  Serial.println(myData.c);
-  Serial.print("String: ");
-  Serial.println(myData.d);
-  Serial.print("Bool: ");
-  Serial.println(myData.e);
+  Serial.printf("Cmd: %s", recvData.cmd);
   Serial.println();
 }
 
-void setup() {
-  Serial.begin(115200);
-  WiFi.mode(WIFI_STA);
-  Serial.println("Starting...");
-  if (esp_now_init() != ESP_OK) {
+// Funktion der konfigurere og starter ESP-NOW protokollen. 
+void espNowSetup() {
+  WiFi.mode(WIFI_STA);                  // Opsætning af ESP's WIFI mode.
+  Serial.println("Starting...");        // Informativ besked til seriel terminalen.
+  if (esp_now_init() != ESP_OK) {       // Starter "ESP-NOW" funktionalitet.
     Serial.println("Fejl ved opstart af ESP-NOW.");
     return;
   }
-  Serial.println("ESP-NOW initialized.");
+  Serial.println("ESP-NOW opstartet."); // Informativ besked til seriel terminalen.
 
-  // Once ESPNow is successfully Init, we will register for Send CB to
-  // get the status of Trasnmitted packet
-  esp_now_register_send_cb(OnDataSent);
+  esp_now_register_send_cb(OnDataSent); // Register funktionen "OnDataSent" som callback når der skal sendes trådløst. 
 
-  //Register peer
+  // Opret en peer struct - dvs. masteren som skal modtage kommunikation og gem relevant data.
   esp_now_peer_info_t peerInfo;
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
 
-  //Add peer
+  // Tilføj peer til kommunikation.
   if (esp_now_add_peer(&peerInfo) != ESP_OK){
     Serial.println("Failed to add peer");
     return;
@@ -91,12 +79,12 @@ void setup() {
   // Brug "OnDataRecv" funktionen når der modtages data.
   esp_now_register_recv_cb(OnDataRecv);
   Serial.println("Recv callback.");
+}
 
-  strcpy(sendData.a, "Hej Louis");
-  sendData.b = 420;
-  sendData.c = 9.99;
-  sendData.d = "Snøvlet?";
-  sendData.e = true;
+void setup() {
+  Serial.begin(115200); // Opsætning af seriel forbindelse.
+
+  espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen. 
 }
 
 void loop() {
