@@ -27,19 +27,12 @@ typedef struct masterData {
 slaveData sendData;
 // Create a masterdData called recvData to handle incomming data.
 masterData recvData;
-// Variable to store if sending data was successful
-String success;
+
 
 // Callback funktion der bruges til at sende data.
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-  if (status ==0) {
-    success = "Delivery Success :)";
-  }
-  else {
-    success = "Delivery Fail :(";
-  }
 }
 
 // Callback funktion der bruges til at modtage data.
@@ -81,14 +74,8 @@ void espNowSetup() {
   Serial.println("Recv callback.");
 }
 
-void setup() {
-  Serial.begin(115200); // Opsætning af seriel forbindelse.
-
-  espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen. 
-}
-
-void loop() {
-  // Send message via ESP-NOW
+// Send data function.
+void sendDataFunc() {
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &sendData, sizeof(sendData));
    
   if (result == ESP_OK) {
@@ -97,5 +84,21 @@ void loop() {
   else {
     Serial.println("Error sending the data");
   }
+}
+
+void setup() {
+  Serial.begin(115200); // Opsætning af seriel forbindelse.
+
+  espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen. 
+}
+
+void loop() {
+  // Send message via ESP-NOW
+    sendData.status = "Standby"; 
+    sendData.xpos = 107.3; 
+    sendData.ypos = 60.3;
+    sendData.forhindring = 9.3;
+    sendData.batPct = 40;
+  sendDataFunc();
   delay(2500);
 }
