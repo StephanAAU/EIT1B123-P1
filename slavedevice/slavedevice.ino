@@ -4,6 +4,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_now.h>
+#include "pinout.h"
+#include "motor.h"
+
 
 uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0x6A, 0x4F, 0x78};
 
