@@ -86,6 +86,10 @@ void sendDataFunc() {
   }
 }
 
+void run() {
+  
+}
+
 void setup() {
   Serial.begin(115200); // Opsætning af seriel forbindelse.
 
