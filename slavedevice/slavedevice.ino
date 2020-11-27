@@ -32,7 +32,6 @@ slaveData sendData;
 // Create a masterdData called recvData to handle incomming data.
 masterData recvData;
 
-
 // Callback funktion der bruges til at sende data.
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
@@ -51,6 +50,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
 // Funktion der konfigurere og starter ESP-NOW protokollen.
 void espNowSetup() {
   WiFi.mode(WIFI_STA);                  // Opsætning af ESP's WIFI mode.
+  Serial.println(WiFi.macAddress());
   Serial.println("Starting...");        // Informativ besked til seriel terminalen.
   if (esp_now_init() != ESP_OK) {       // Starter "ESP-NOW" funktionalitet.
     Serial.println("Fejl ved opstart af ESP-NOW.");

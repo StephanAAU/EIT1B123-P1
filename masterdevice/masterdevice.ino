@@ -3,9 +3,11 @@
 
 #include <esp_now.h>
 #include <WiFi.h>
+
 #include "rangefinder.h"
 
-uint8_t broadcastAddress[] = {0x24, 0x62, 0xAB, 0xD7, 0x5A, 0x28};
+//extern uint8_t broadcastAddress[] = {0x24, 0x62, 0xAB, 0xD7, 0x5A, 0x28};
+uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0xF9, 0xDC, 0x08};
 
 typedef struct masterData {
   String cmd;
@@ -14,10 +16,6 @@ typedef struct masterData {
   float ypos;
   int funcNr;
 } masterData;
-
-
-masterData sendData;
-
 typedef struct slaveData {
   String status; 
   float xpos; 
@@ -27,6 +25,7 @@ typedef struct slaveData {
 
 } slaveData;
 
+masterData sendData;
 slaveData recvData; 
 
 String serialData;
@@ -52,33 +51,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   Serial.println(recvData.batPct); 
   Serial.println();
 }
-void setup () {
 
-  Serial.begin(115200);
-
-  WiFi.mode(WIFI_STA);
-
-  if (esp_now_init() != ESP_OK) {
-    Serial.println("Error initializing ESP-NOW");
-    return;
-  }
-
-
-  esp_now_register_send_cb(OnDataSent);
-
-  esp_now_peer_info_t peerInfo;
-  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-  peerInfo.channel = 0;
-  peerInfo.encrypt = false;
-
-  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-    Serial.println("Failed to add peer");
-    return;
-  }
-  esp_now_register_recv_cb(OnDataRecv);
-}
-
-// Send data function.
 void sendDataFunc() {
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &sendData, sizeof(sendData));
    
@@ -88,6 +61,45 @@ void sendDataFunc() {
   else {
     Serial.println("Error sending the data");
   }
+}
+
+void espNowSetup() {
+  WiFi.mode(WIFI_STA);                  // Opsætning af ESP's WIFI mode.
+  Serial.println(WiFi.macAddress());
+  Serial.println("Starting...");        // Informativ besked til seriel terminalen.
+  if (esp_now_init() != ESP_OK) {       // Starter "ESP-NOW" funktionalitet.
+    Serial.println("Fejl ved opstart af ESP-NOW.");
+    return;
+  }
+  Serial.println("ESP-NOW opstartet."); // Informativ besked til seriel terminalen.
+
+  esp_now_register_send_cb(OnDataSent); // Register funktionen "OnDataSent" som callback når der skal sendes trådløst.
+
+  // Opret en peer struct - dvs. masteren som skal modtage kommunikation og gem relevant data.
+  esp_now_peer_info_t peerInfo;
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
+
+  // Tilføj peer til kommunikation.
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+    Serial.println("Failed to add peer");
+    return;
+  }
+  Serial.println("Peer added...");
+
+  // Brug "OnDataRecv" funktionen når der modtages data.
+  esp_now_register_recv_cb(OnDataRecv);
+  Serial.println("Recv callback.");
+}
+
+void setup () {
+  Serial.begin(115200);
+
+  WiFi.mode(WIFI_STA);
+  Serial.println(WiFi.macAddress());
+
+  espNowSetup();
 }
 
 void execSlaveFunc(int funcNr) {
