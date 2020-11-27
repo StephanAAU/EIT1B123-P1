@@ -1,5 +1,9 @@
+// Master device software
+// My MAC: 3C:71:BF:6A:4F:78
+
 #include <esp_now.h>
 #include <WiFi.h>
+#include "rangefinder.h"
 
 uint8_t broadcastAddress[] = {0x24, 0x62, 0xAB, 0xD7, 0x5A, 0x28};
 
@@ -8,7 +12,7 @@ typedef struct masterData {
   float radius;
   float xpos;
   float ypos;
-
+  int funcNr;
 } masterData;
 
 
@@ -25,6 +29,7 @@ typedef struct slaveData {
 
 slaveData recvData; 
 
+String serialData;
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
@@ -73,25 +78,41 @@ void setup () {
   esp_now_register_recv_cb(OnDataRecv);
 }
 
-
-void loop () {
-  sendData.cmd = "Dette er en kommando";
-  sendData.radius = random(1, 100);
-  sendData.xpos = 1.2;
-  sendData.ypos = 2.1;
-
-  recvData.status = "Status for slave";
-  recvData.xpos = 2.1;
-  recvData.ypos = 1.2;
-  recvData.forhindring = 10;
-  recvData.batPct = 5;
-
+// Send data function.
+void sendDataFunc() {
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &sendData, sizeof(sendData));
+   
   if (result == ESP_OK) {
     Serial.println("Sent with success");
   }
   else {
     Serial.println("Error sending the data");
   }
-  delay(2000);
+}
+
+void execSlaveFunc(int funcNr) {
+  sendData.cmd = "execFunc";
+  sendData.funcNr = funcNr;
+
+  sendDataFunc();
+}
+
+void loop () {
+   while(Serial.available()) {
+    serialData = Serial.readString();// read the incoming data as string
+   }
+   if (serialData == "test") {
+      Serial.println("\n\nSending: test data");   
+      sendData.cmd = "standby";
+      sendData.radius = random(1, 100);
+      sendData.xpos = 1.2;
+      sendData.ypos = 2.1;
+      
+      sendDataFunc();
+   }
+   if (serialData == "turn") {
+    Serial.println("Sending: Execute function #1"); 
+    execSlaveFunc(1);
+   }
+  serialData = "";
 }
