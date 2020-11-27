@@ -92,7 +92,16 @@ void sendDataFunc() {
 void setup() {
   Serial.begin(115200); // Opsætning af seriel forbindelse.
 
-  espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen. 
+  pinMode(MOTOR_INA1, OUTPUT);
+  pinMode(MOTOR_INB1, OUTPUT);
+
+  pinMode(MOTOR_INA2, OUTPUT);
+  pinMode(MOTOR_INB2, OUTPUT);
+
+  PwmSetup();
+  updatePWMValues();
+
+  espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
 }
 
 void loop() {

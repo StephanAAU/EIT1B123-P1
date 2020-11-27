@@ -50,5 +50,9 @@ void turn(int deg);
  */
 void verifyTurn();
 
+void PwmSetup();
+
+void updatePWMValues();
+
 
 #endif // MOTOR_H_

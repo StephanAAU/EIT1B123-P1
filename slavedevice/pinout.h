@@ -2,12 +2,14 @@
 #define PINOUT_H_
 
 
-const int MOTOR_PWM_1 = 8; // OUTPUT
-const int MOTOR_PWM_2 = 9; // OUTPUT
-const int MOTOR_INA1 = 0xA0; // OUTPUT
-const int MOTOR_INB1 = 0xA1; // OUTPUT
-const int MOTOR_INA2 = 0xA2; // OUTPUT
-const int MOTOR_INB2 = 0xA3; // OUTPUT
+const int MOTOR_PWM_1 = 32; // OUTPUT
+const int MOTOR_PWM_1_CHANNEL = 0;
+const int MOTOR_PWM_2 = 33; // OUTPUT
+const int MOTOR_PWM_2_CHANNEL = 1;
+const int MOTOR_INA1 = 25; // OUTPUT
+const int MOTOR_INB1 = 26; // OUTPUT
+const int MOTOR_INA2 = 27; // OUTPUT
+const int MOTOR_INB2 = 14; // OUTPUT
 
 
 #endif // PINOUT_H_
