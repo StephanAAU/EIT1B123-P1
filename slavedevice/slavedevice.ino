@@ -4,6 +4,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_now.h>
+#include "pinout.h"
+#include "motor.h"
+
 
 uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0x6A, 0x4F, 0x78};
 
@@ -102,11 +105,23 @@ void setup() {
   espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
   
   Serial.println(WiFi.macAddress());
+  
+  pinMode(MOTOR_INA1, OUTPUT);
+  pinMode(MOTOR_INB1, OUTPUT);
+
+  pinMode(MOTOR_INA2, OUTPUT);
+  pinMode(MOTOR_INB2, OUTPUT);
+
+  PwmSetup();
+  updatePWMValues();
+
+  espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
 }
 
 void loop() {
   currentMillis = millis();
   // Send message via ESP-NOW
+  
   if (recvData.cmd == "standby")
   {
 
@@ -131,4 +146,12 @@ void loop() {
     sendDataFunc();
     startMillis = currentMillis;  //IMPORTANT to save the start time of the current LED brightness
   }
+  
+  /*sendData.status = "Standby";
+  sendData.xpos = 107.3;
+  sendData.ypos = 60.3;
+  sendData.forhindring = 9.3;
+  sendData.batPct = 40;
+  sendDataFunc();
+  delay(2500);*/
 }
