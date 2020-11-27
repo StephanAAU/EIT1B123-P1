@@ -30,6 +30,8 @@ slaveData recvData;
 
 String serialData;
 
+esp_now_peer_info_t peerInfo;
+
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
@@ -76,7 +78,6 @@ void espNowSetup() {
   esp_now_register_send_cb(OnDataSent); // Register funktionen "OnDataSent" som callback når der skal sendes trådløst.
 
   // Opret en peer struct - dvs. masteren som skal modtage kommunikation og gem relevant data.
-  esp_now_peer_info_t peerInfo;
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
