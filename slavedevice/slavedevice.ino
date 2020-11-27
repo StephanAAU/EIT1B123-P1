@@ -12,18 +12,18 @@ uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0x6A, 0x4F, 0x78};
 
 // Slave data structure - Sending from this device.
 typedef struct slaveData {
-    String status;
-    float xpos;
-    float ypos;
-    float forhindring;
-    int batPct;
+  String status;
+  float xpos;
+  float ypos;
+  float forhindring;
+  int batPct;
 } slaveData;
 
 typedef struct masterData {
-    String cmd;
-    float radius;
-    float xpos;
-    float ypos;
+  String cmd;
+  float radius;
+  float xpos;
+  float ypos;
 } masterData;
 
 // Create a slaveData called sendData to handle outgoing data.
@@ -47,7 +47,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   Serial.println();
 }
 
-// Funktion der konfigurere og starter ESP-NOW protokollen. 
+// Funktion der konfigurere og starter ESP-NOW protokollen.
 void espNowSetup() {
   WiFi.mode(WIFI_STA);                  // Opsætning af ESP's WIFI mode.
   Serial.println("Starting...");        // Informativ besked til seriel terminalen.
@@ -57,7 +57,7 @@ void espNowSetup() {
   }
   Serial.println("ESP-NOW opstartet."); // Informativ besked til seriel terminalen.
 
-  esp_now_register_send_cb(OnDataSent); // Register funktionen "OnDataSent" som callback når der skal sendes trådløst. 
+  esp_now_register_send_cb(OnDataSent); // Register funktionen "OnDataSent" som callback når der skal sendes trådløst.
 
   // Opret en peer struct - dvs. masteren som skal modtage kommunikation og gem relevant data.
   esp_now_peer_info_t peerInfo;
@@ -66,7 +66,7 @@ void espNowSetup() {
   peerInfo.encrypt = false;
 
   // Tilføj peer til kommunikation.
-  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
     Serial.println("Failed to add peer");
     return;
   }
@@ -80,7 +80,7 @@ void espNowSetup() {
 // Send data function.
 void sendDataFunc() {
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &sendData, sizeof(sendData));
-   
+
   if (result == ESP_OK) {
     Serial.println("Sent with success");
   }
@@ -106,11 +106,11 @@ void setup() {
 
 void loop() {
   // Send message via ESP-NOW
-    sendData.status = "Standby"; 
-    sendData.xpos = 107.3; 
-    sendData.ypos = 60.3;
-    sendData.forhindring = 9.3;
-    sendData.batPct = 40;
+  sendData.status = "Standby";
+  sendData.xpos = 107.3;
+  sendData.ypos = 60.3;
+  sendData.forhindring = 9.3;
+  sendData.batPct = 40;
   sendDataFunc();
   delay(2500);
 }
