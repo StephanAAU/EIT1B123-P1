@@ -1,10 +1,14 @@
 // Master device software
 // My MAC: 3C:71:BF:6A:4F:78
 
+#include <Arduino.h>
 #include <esp_now.h>
 #include <WiFi.h>
 
 #include "rangefinder.h"
+
+unsigned long startMillis;    // Start timestamp
+unsigned long currentMillis;  // temp timestamp
 
 //extern uint8_t broadcastAddress[] = {0x24, 0x62, 0xAB, 0xD7, 0x5A, 0x28};
 uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0xF9, 0xDC, 0x08};
@@ -27,6 +31,7 @@ typedef struct slaveData {
 
 masterData sendData;
 slaveData recvData; 
+esp_now_peer_info_t peerInfo;
 
 String serialData;
 
@@ -76,7 +81,6 @@ void espNowSetup() {
   esp_now_register_send_cb(OnDataSent); // Register funktionen "OnDataSent" som callback når der skal sendes trådløst.
 
   // Opret en peer struct - dvs. masteren som skal modtage kommunikation og gem relevant data.
-  esp_now_peer_info_t peerInfo;
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
@@ -127,4 +131,10 @@ void loop () {
     execSlaveFunc(1);
    }
   serialData = "";
+
+   if ((currentMillis - startMillis) >= 5000)  //test whether the period has elapsed
+  {
+    Serial.println("Idling....");
+    startMillis = currentMillis;  //IMPORTANT to save the start time of the current LED brightness
+  }
 }

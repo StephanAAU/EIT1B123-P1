@@ -27,10 +27,9 @@ typedef struct masterData {
   int funcNr;
 } masterData;
 
-// Create a slaveData called sendData to handle outgoing data.
 slaveData sendData;
-// Create a masterdData called recvData to handle incomming data.
 masterData recvData;
+esp_now_peer_info_t peerInfo;
 
 // Callback funktion der bruges til at sende data.
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
@@ -61,7 +60,6 @@ void espNowSetup() {
   esp_now_register_send_cb(OnDataSent); // Register funktionen "OnDataSent" som callback når der skal sendes trådløst.
 
   // Opret en peer struct - dvs. masteren som skal modtage kommunikation og gem relevant data.
-  esp_now_peer_info_t peerInfo;
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
