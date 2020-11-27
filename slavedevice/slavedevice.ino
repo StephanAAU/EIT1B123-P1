@@ -99,6 +99,8 @@ void setup() {
   Serial.begin(115200); // Opsætning af seriel forbindelse.
 
   espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
+  
+  Serial.println(WiFi.macAddress());
 }
 
 void loop() {
