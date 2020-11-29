@@ -30,10 +30,7 @@ void stopMotors() {
   stopMotor(1);
   stopMotor(2);
 
-  driveEnd = 0;
-  turnEnd = 0;
-  driving = false;
-  turning = false;
+  Serial.println("STOP");
 }
 
 void stopMotor(int motor) {
@@ -42,21 +39,35 @@ void stopMotor(int motor) {
   } else if (motor == 2) {
     Pwm2Value = 0;
   }
+  
+  updatePWMValues();
 }
 
 void drive(int cm) {
+  stopMotors();
+
+  Pwm1Value = 100;
+  Pwm2Value = 100;
   driving = true;
 
-  int k = cm * 100; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
+  int k = cm * 30; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
 
   driveStart = millis();
-  driveEnd = millis() + k;
+  driveEnd = driveStart + k;
 
-  motorsRun();
+  digitalWrite(MOTOR_INA1, LOW);
+  digitalWrite(MOTOR_INB1, HIGH);
+
+  digitalWrite(MOTOR_INA2, LOW);
+  digitalWrite(MOTOR_INB2, HIGH);
+  
+  updatePWMValues();
 }
 
 void verifyDrive() {
   if (driving && driveEnd < millis()) {
+    driving = false;
+    Serial.println("verifyDrive stop");
     stopMotors();
   }
 }
@@ -66,13 +77,12 @@ void turn(int deg) {
 
   Pwm1Value = 100;
   Pwm2Value = 100;
-
   turning = true;
 
-  int k = 100; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
+  int k = deg * 5; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
 
   turnStart = millis();
-  turnEnd = millis() + k;
+  turnEnd = turnStart + k;
 
   if (deg >= 0) {
     digitalWrite(MOTOR_INA1, HIGH);
@@ -91,6 +101,8 @@ void turn(int deg) {
 
 void verifyTurn() {
   if (turning && turnEnd < millis()) {
+    turning = false;
+    Serial.println("verifyTurn stop");
     stopMotors();
   }
 }

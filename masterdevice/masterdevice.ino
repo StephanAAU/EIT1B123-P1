@@ -15,18 +15,19 @@ typedef struct masterData {
   float xpos;
   float ypos;
   int funcNr;
+  int arg1;
 } masterData;
 typedef struct slaveData {
-  String status; 
-  float xpos; 
-  float ypos; 
-  float forhindring; 
-  int batPct; 
+  String status;
+  float xpos;
+  float ypos;
+  float forhindring;
+  int batPct;
 
 } slaveData;
 
 masterData sendData;
-slaveData recvData; 
+slaveData recvData;
 
 String serialData;
 
@@ -50,13 +51,13 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   Serial.print("Float: ");
   Serial.println(recvData.forhindring);
   Serial.print("int: ");
-  Serial.println(recvData.batPct); 
+  Serial.println(recvData.batPct);
   Serial.println();
 }
 
 void sendDataFunc() {
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &sendData, sizeof(sendData));
-   
+
   if (result == ESP_OK) {
     Serial.println("Sent with success");
   }
@@ -111,21 +112,31 @@ void execSlaveFunc(int funcNr) {
 }
 
 void loop () {
-   while(Serial.available()) {
+  while (Serial.available()) {
     serialData = Serial.readString();// read the incoming data as string
-   }
-   if (serialData == "test") {
-      Serial.println("\n\nSending: test data");   
-      sendData.cmd = "standby";
-      sendData.radius = random(1, 100);
-      sendData.xpos = 1.2;
-      sendData.ypos = 2.1;
-      
-      sendDataFunc();
-   }
-   if (serialData == "turn") {
-    Serial.println("Sending: Execute function #1"); 
-    execSlaveFunc(1);
-   }
+  }
+
+  if (serialData == "motorsRun" || serialData == "stopMotors" || serialData == "turn" || serialData == "drive") {
+    Serial.print("Sending: ");
+    Serial.println(serialData);
+    
+    sendData.cmd = serialData;
+    if (serialData == "turn") {
+      sendData.arg1 = 360;
+    } else if (serialData == "drive") {
+      sendData.arg1 = 100;
+    }
+    sendDataFunc();
+  }
+
+  if (serialData == "test") {
+    Serial.println("\n\nSending: test data");
+    sendData.cmd = "standby";
+    sendData.radius = random(1, 100);
+    sendData.xpos = 1.2;
+    sendData.ypos = 2.1;
+
+    sendDataFunc();
+  }
   serialData = "";
 }
