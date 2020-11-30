@@ -9,7 +9,8 @@
 #include "ultra.h"
 
 
-uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0x6A, 0x4F, 0x78};
+//uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0x6A, 0x4F, 0x78};
+uint8_t broadcastAddress[] = {0x24, 0x62, 0xAB, 0xD7, 0x5A, 0x28}; // BRUNO's ESP32
 
 unsigned long startMillis;    // Start timestamp
 unsigned long currentMillis;  // temp timestamp
@@ -29,6 +30,8 @@ typedef struct masterData {
   float xpos;
   float ypos;
   int funcNr;
+  int arg1;
+  bool read;
 } masterData;
 
 slaveData sendData;
@@ -44,6 +47,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 // Callback funktion der bruges til at modtage data.
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&recvData, incomingData, sizeof(recvData));
+  recvData.read = false;
   Serial.print("Bytes received: ");
   Serial.println(len);
   Serial.printf("Cmd: %s", recvData.cmd.c_str());
@@ -125,39 +129,54 @@ void setup() {
 }
 
 void loop() {
+  verifyTurn();
+  verifyDrive();
+  
   currentMillis = millis();
   // Send message via ESP-NOW
-  
-  if (recvData.cmd == "standby")
-  {
 
-  }
-
-  if (recvData.cmd == "execFunc")
-  {
-    if (recvData.funcNr == 1) {
-      run();
+  if (!recvData.read) {
+    recvData.read = true;
+    
+    if (recvData.cmd == "motorsRun")
+    {
+      motorsRun();
     }
-	if (recvData.funcNr == 2) {
-      sendData.forhindring = ultraGetDist();
-	  Serial.println("Måler afstand.");
-	  sendDataFunc();
+    if (recvData.cmd == "stopMotors")
+    {
+      stopMotors();
     }
-    recvData.cmd = "standby";
-    recvData.funcNr = 0;
-  }
+    if (recvData.cmd == "turn")
+    {
+      turn(recvData.arg1);
+    }
+    if (recvData.cmd == "drive")
+    {
+      drive(recvData.arg1);
+    }
 
-  if ((currentMillis - startMillis) >= 5000)  //test whether the period has elapsed
-  {
-    sendDataFunc();
-    startMillis = currentMillis;  //IMPORTANT to save the start time of the current LED brightness
-  }
-  
+    if (recvData.cmd == "execFunc")
+    {
+    	if (recvData.funcNr == 2) {
+        sendData.forhindring = ultraGetDist();
+    	  Serial.println("Måler afstand.");
+    	  sendDataFunc();
+        }
+        recvData.cmd = "standby";
+        recvData.funcNr = 0;
+      }
+    }
+	if ((currentMillis - startMillis) >= 5000)  //test whether the period has elapsed
+	{
+	sendDataFunc();
+	startMillis = currentMillis;  //IMPORTANT to save the start time of the current LED brightness
+	}
+
   /*sendData.status = "Standby";
-  sendData.xpos = 107.3;
-  sendData.ypos = 60.3;
-  sendData.forhindring = 9.3;
-  sendData.batPct = 40;
-  sendDataFunc();
-  delay(2500);*/
+    sendData.xpos = 107.3;
+    sendData.ypos = 60.3;
+    sendData.forhindring = 9.3;
+    sendData.batPct = 40;
+    sendDataFunc();
+    delay(2500);*/
 }
