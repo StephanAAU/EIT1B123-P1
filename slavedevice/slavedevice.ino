@@ -6,6 +6,7 @@
 #include <esp_now.h>
 #include "pinout.h"
 #include "motor.h"
+#include "ultra.h"
 
 
 uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0x6A, 0x4F, 0x78};
@@ -34,8 +35,6 @@ slaveData sendData;
 masterData recvData;
 esp_now_peer_info_t peerInfo;
 
-esp_now_peer_info_t peerInfo;
-
 // Callback funktion der bruges til at sende data.
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
@@ -47,7 +46,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&recvData, incomingData, sizeof(recvData));
   Serial.print("Bytes received: ");
   Serial.println(len);
-  Serial.printf("Cmd: %s", recvData.cmd);
+  Serial.printf("Cmd: %s", recvData.cmd.c_str());
   Serial.println();
 }
 
@@ -98,23 +97,31 @@ void run() {
 }
 
 void setup() {
-  startMillis = millis();
-  Serial.begin(115200); // Opsætning af seriel forbindelse.
+	startMillis = millis();
+	Serial.begin(115200); // Opsætning af seriel forbindelse.
 
-  espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
-  
-  Serial.println(WiFi.macAddress());
-  
-  pinMode(MOTOR_INA1, OUTPUT);
-  pinMode(MOTOR_INB1, OUTPUT);
+	espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
 
-  pinMode(MOTOR_INA2, OUTPUT);
-  pinMode(MOTOR_INB2, OUTPUT);
+	Serial.println(WiFi.macAddress());
 
-  PwmSetup();
-  updatePWMValues();
+	pinMode(MOTOR_INA1, OUTPUT);
+	pinMode(MOTOR_INB1, OUTPUT);
 
-  espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
+	pinMode(MOTOR_INA2, OUTPUT);
+	pinMode(MOTOR_INB2, OUTPUT);
+
+	PwmSetup();
+	updatePWMValues();
+
+	initUltra();
+	espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
+
+	// Test variabels.
+    sendData.status = "standby";
+    sendData.xpos = 107.3;
+    sendData.ypos = 60.3;
+    sendData.forhindring = 9.3;
+    sendData.batPct = 40;
 }
 
 void loop() {
@@ -131,17 +138,17 @@ void loop() {
     if (recvData.funcNr == 1) {
       run();
     }
+	if (recvData.funcNr == 2) {
+      sendData.forhindring = ultraGetDist();
+	  Serial.println("Måler afstand.");
+	  sendDataFunc();
+    }
     recvData.cmd = "standby";
     recvData.funcNr = 0;
   }
 
   if ((currentMillis - startMillis) >= 5000)  //test whether the period has elapsed
   {
-    sendData.status = "standby";
-    sendData.xpos = 107.3;
-    sendData.ypos = 60.3;
-    sendData.forhindring = 9.3;
-    sendData.batPct = 40;
     sendDataFunc();
     startMillis = currentMillis;  //IMPORTANT to save the start time of the current LED brightness
   }
