@@ -1,4 +1,4 @@
-#ifndef HW_RANGEFINDER_H
-#define HW_RANGEFINDER_H
+#ifndef KOMMUNIKATION_H_
+#define KOMMUNIKATION_H_
 
 #endif

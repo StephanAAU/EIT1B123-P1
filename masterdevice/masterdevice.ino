@@ -21,6 +21,7 @@ typedef struct masterData {
   int funcNr;
   int arg1;
 } masterData;
+
 typedef struct slaveData {
   String status;
   float xpos;
@@ -35,7 +36,6 @@ slaveData recvData;
 esp_now_peer_info_t peerInfo;
 
 String serialData;
-
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
@@ -105,6 +105,8 @@ void setup () {
   WiFi.mode(WIFI_STA);
   Serial.println(WiFi.macAddress());
 
+  initRangefinder();
+	
   espNowSetup();
 }
 
