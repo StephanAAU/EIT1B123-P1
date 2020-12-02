@@ -7,7 +7,7 @@
 const int dirPin = 23;
 const int stepPin = 15;
 const int stepsPerRevolution = 400;
-float minValue = 4000, stepLock = 0, afstandAfvigelse = 0, radianAfvigelse = 0, laengdeAfvigelse = 0, drejeKegleVinkel = 0;
+float minValue = 4000, stepLock = 0, stepLockGrader = 0, laengdeAfvigelse = 0, A = 0, B = 0, drejeKegleVinkel = 0, akselsVaerdi = 1290;
 
 VL53L1X sensor;
 float y;
@@ -38,7 +38,7 @@ void setup()
 
 void medUret() {
   // Set motor direction clockwise
-  digitalWrite(dirPin, HIGH);
+  digitalWrite(dirPin, LOW);
 
   // Spin motor speed
   for(int x = 0; x < stepsPerRevolution*0.75; x++)
@@ -51,7 +51,7 @@ void medUret() {
 
 void modUret() {
   // Set motor direction counterclockwise
-  digitalWrite(dirPin, LOW);
+  digitalWrite(dirPin, HIGH);
 
   // Spin motor speed
   for(int x = 300; x > 0; x--)
@@ -67,16 +67,28 @@ void findAfstand(int x) {
   if (y < minValue) {
     minValue = y;
     stepLock = x;
+    Serial.println("minValue er ");
+    Serial.println(minValue);
   }
 }
 
-float findAfvigendeLaengde () {
+float findAfvigendeLaengde() {
   float favPosition = 150 * 0.9;
-  stepLock = stepLock * 0.9;
-  if (stepLock > favPosition + 3*0.9 or stepLock < favPosition - 3*0.9) {
-    radianAfvigelse = (favPosition - stepLock) * 3.14/180;
-    laengdeAfvigelse = (minValue*minValue + minValue*minValue) - (2 * minValue*minValue * cos(radianAfvigelse));
-    laengdeAfvigelse = sqrt(laengdeAfvigelse);
+  stepLockGrader = stepLock * 0.9;
+  float stepLockRadian = 0;
+  float x = 0, y = 0, x2 = 0, y2 = 0;
+  if (stepLockGrader > favPosition + 5*0.9 or stepLockGrader < favPosition - 5*0.9) {
+    stepLockRadian = (stepLockGrader * 3.14159) / 180;
+    favPosition = (favPosition * 3.14159) / 180;
+    x = cos(stepLockRadian) * minValue;
+    x2 = cos(favPosition) * akselsVaerdi;
+    A = x2 - x;
+    y = sin(stepLockRadian) * minValue;
+    y2 = sin(favPosition) * akselsVaerdi;
+    B = y2 - y;
+    laengdeAfvigelse = sqrt(A*A + B*B);
+    Serial.println("laengdeAfvigelse er ");
+    Serial.println(laengdeAfvigelse);
     return laengdeAfvigelse;
   }
   else {
@@ -85,25 +97,20 @@ float findAfvigendeLaengde () {
 }
 
 float findDrejeVinkel () {
-  float favPosition = 150 * 0.9;
-  stepLock = stepLock * 0.9;
-  drejeKegleVinkel = (180 - (favPosition - stepLock)) / 2;
+  Serial.println("stepLockGrader er ");
+  Serial.println(stepLockGrader);
+  drejeKegleVinkel = atan(B/A);
+  drejeKegleVinkel = drejeKegleVinkel * 100;
+  Serial.println("drejeKegleVinkel er ");
+  Serial.println(drejeKegleVinkel);
   return drejeKegleVinkel;
-}
-
-float checkLaengdeTilKegle(float AkselsVaerdi) {
-  if (minValue > AkselsVaerdi + 100 or minValue < AkselsVaerdi - 100) {
-    afstandAfvigelse = AkselsVaerdi - minValue;
-    return afstandAfvigelse;
-  }
-  else {
-    return 0;
-  }
 }
 
 void reset() {
   minValue = 4000;
   stepLock = 0;
+  A = 0;
+  B = 0;
 }
 
 void loop()
@@ -112,6 +119,5 @@ void loop()
   modUret();
   findAfvigendeLaengde();
   findDrejeVinkel();
-  checkLaengdeTilKegle(float AkselsVaerdi);
   reset();
 }
