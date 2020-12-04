@@ -1,8 +1,10 @@
-#ifndef RANGE_H_
-#define RANGE_H_
+#ifndef RANGEFINDER_H
+#define RANGEFINDER_H
 
-float afstandTilKegle(float x);
+void findAfstand(int x, float *minValue, float *stepLock);
+float beregnAfstandTilKegle(float x);
 void initRangefinders();
 float afstandTilLift();
+float afstandTilKegle();
 
 #endif

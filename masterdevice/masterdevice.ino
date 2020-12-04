@@ -6,6 +6,7 @@
 #include <WiFi.h>
 
 #include "rangefinder.h"
+#include "stepper.h"
 
 unsigned long startMillis;    // Start timestamp
 unsigned long currentMillis;  // temp timestamp
@@ -15,9 +16,12 @@ uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0xF9, 0xDC, 0x08};
 
 typedef struct masterData {
   String cmd;
-  float radius;
-  float xpos;
-  float ypos;
+  float liftHeight;
+  float kegleRadius;
+  float beregnAfstandTilKegle;
+  float laengdeAfvigelse;
+  float stepLockGrader;
+  float drejeKegleVinkel
   int funcNr;
   int arg1;
 } masterData;
@@ -102,12 +106,17 @@ void espNowSetup() {
 void setup () {
   Serial.begin(115200);
 
+  Serial.println("Starting device...");
   WiFi.mode(WIFI_STA);
   Serial.println(WiFi.macAddress());
 
-  initRangefinder();
+  initRangefinders();
 	
   espNowSetup();
+
+  stepperSetup();
+
+  startMillis = millis();
 }
 
 void execSlaveFunc(int funcNr) {
@@ -117,7 +126,7 @@ void execSlaveFunc(int funcNr) {
   sendDataFunc();
 }
 
-void loop () {
+void checkSerial() {
   while (Serial.available()) {
     serialData = Serial.readString();// read the incoming data as string
   }
@@ -144,11 +153,25 @@ void loop () {
 
     sendDataFunc();
   }
-  serialData = "";
 
-   if ((currentMillis - startMillis) >= 5000)  //test whether the period has elapsed
+  if (serialData == "find") {
+    medUret();
+    modUret();
+    findAfvigendeLaengde(beregnAfstandTilKegle(afstandTilLift()));
+    findDrejeVinkel();
+    resetVinkel();
+  }
+  serialData = "";
+}
+
+void loop () {
+  checkSerial();
+  currentMillis = millis();
+  
+  if ((currentMillis - startMillis) >= 500)  //test whether the period has elapsed
   {
-    Serial.println("Idling....");
+    float tempVar1 = afstandTilLift();
+    Serial.printf("Lift: %.2f mm \t Kegle: %.2f \t Radius: %.2f \n", afstandTilKegle(), tempVar1, beregnAfstandTilKegle(tempVar1));
     startMillis = currentMillis;  //IMPORTANT to save the start time of the current LED brightness
   }
 }
