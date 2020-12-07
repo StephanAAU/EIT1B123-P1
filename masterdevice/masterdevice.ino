@@ -7,12 +7,12 @@
 
 #include "rangefinder.h"
 #include "stepper.h"
+#include "pinout.h"
 
-unsigned long startMillis;    // Start timestamp
-unsigned long currentMillis;  // temp timestamp
+uint8_t progCnt = 0;
 
-//extern uint8_t broadcastAddress[] = {0x24, 0x62, 0xAB, 0xD7, 0x5A, 0x28};
-uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0xF9, 0xDC, 0x08};
+uint8_t broadcastAddress[] = {0x24, 0x62, 0xAB, 0xD7, 0x5A, 0x28};
+//uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0xF9, 0xDC, 0x08};
 
 typedef struct masterData {
   String cmd;
@@ -21,8 +21,7 @@ typedef struct masterData {
   float beregnAfstandTilKegle;
   float laengdeAfvigelse;
   float stepLockGrader;
-  float drejeKegleVinkel
-  int funcNr;
+  float drejeKegleVinkel;
   int arg1;
 } masterData;
 
@@ -36,10 +35,8 @@ typedef struct slaveData {
 } slaveData;
 
 masterData sendData;
-slaveData recvData; 
+slaveData recvData;
 esp_now_peer_info_t peerInfo;
-
-String serialData;
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("\r\nLast Packet Send Status:\t");
@@ -50,20 +47,10 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&recvData, incomingData, sizeof(recvData));
   Serial.print("Bytes received: ");
   Serial.println(len);
-  Serial.print("String: ");
-  Serial.println(recvData.status);
-  Serial.print("Float: ");
-  Serial.println(recvData.xpos);
-  Serial.print("Float: ");
-  Serial.println(recvData.ypos);
-  Serial.print("Float: ");
-  Serial.println(recvData.forhindring);
-  Serial.print("int: ");
-  Serial.println(recvData.batPct);
-  Serial.println();
 }
 
 void sendDataFunc() {
+  Serial.printf("Sending cmd:%s a:%i h:%.2f r:%.2f k:%.2f l:%.2f g:%.2f v:%.2f", sendData.cmd.c_str(), sendData.arg1, sendData.liftHeight, sendData.kegleRadius, sendData.beregnAfstandTilKegle, sendData.laengdeAfvigelse, sendData.stepLockGrader, sendData.drejeKegleVinkel);
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &sendData, sizeof(sendData));
 
   if (result == ESP_OK) {
@@ -72,6 +59,9 @@ void sendDataFunc() {
   else {
     Serial.println("Error sending the data");
   }
+  // Nulstil data.
+  sendData.cmd = "standby";
+  sendData.arg1 = 0;
 }
 
 void espNowSetup() {
@@ -110,68 +100,148 @@ void setup () {
   WiFi.mode(WIFI_STA);
   Serial.println(WiFi.macAddress());
 
-  initRangefinders();
-	
   espNowSetup();
+
+  initRangefinders();
 
   stepperSetup();
 
-  startMillis = millis();
+  sendData.liftHeight = 1;
+  sendData.kegleRadius = 2;
+  sendData.beregnAfstandTilKegle = 3;
+  sendData.laengdeAfvigelse = 4;
+  sendData.stepLockGrader = 5;
+  sendData.drejeKegleVinkel = 6;
+  sendData.arg1 = 0;
 }
 
-void execSlaveFunc(int funcNr) {
-  sendData.cmd = "execFunc";
-  sendData.funcNr = funcNr;
-
-  sendDataFunc();
+void lokaliserKegle() {
+  medUret();
+  modUret();
+  sendData.laengdeAfvigelse = findAfvigendeLaengde(sendData.kegleRadius);
+  sendData.drejeKegleVinkel = findDrejeVinkel();
+  resetVinkel();
 }
 
 void checkSerial() {
+  String serialData;
+  String cmd = "";
+  String argument = "";
+
+  // Håndering af data på seriel bussen.
   while (Serial.available()) {
-    serialData = Serial.readString();// read the incoming data as string
+    char str_array[serialData.length()];
+    serialData = Serial.readString();
+    serialData.concat(" 0");
+    serialData.toCharArray(str_array, serialData.length());
+    cmd = strtok(str_array, " ");
+    argument = strtok(NULL, " ");
   }
 
-  if (serialData == "motorsRun" || serialData == "stopMotors" || serialData == "turn" || serialData == "drive") {
-    Serial.print("Sending: ");
-    Serial.println(serialData);
-    
-    sendData.cmd = serialData;
-    if (serialData == "turn") {
-      sendData.arg1 = 360;
-    } else if (serialData == "drive") {
-      sendData.arg1 = 100;
-    }
+  // Debug kommando'er som håndteres ens.
+  if (cmd == "motorsRun" || cmd == "stopMotors" || cmd == "turn" || cmd == "drive") {
+    sendData.cmd = cmd;
+    sendData.arg1 = argument.toInt();
     sendDataFunc();
   }
 
-  if (serialData == "test") {
-    Serial.println("\n\nSending: test data");
-    sendData.cmd = "standby";
-    sendData.radius = random(1, 100);
-    sendData.xpos = 1.2;
-    sendData.ypos = 2.1;
-
+  // Debug kommando til at sende data.
+  if (cmd == "dataSend") {
+    Serial.println("\n\nSending data from struct");
     sendDataFunc();
   }
 
-  if (serialData == "find") {
-    medUret();
-    modUret();
-    findAfvigendeLaengde(beregnAfstandTilKegle(afstandTilLift()));
-    findDrejeVinkel();
-    resetVinkel();
+  // Debug kommando til kegle lokation.
+  if (cmd == "find") {
+    lokaliserKegle();
   }
-  serialData = "";
+
+  // Kommando til at starte normal drift.
+  if (cmd == "start") {
+    progCnt = 1;
+  }
 }
 
 void loop () {
+  static unsigned long prevMillis200ms = 0;    // Timestamp til hvert 200ms
+  static unsigned long prevMillis1000ms = 0;    // Timestamp til hvert 1s
+  static unsigned long currMillis;  // Temp. timestamp
+  static float sidsteLiftH = 0;
+
   checkSerial();
-  currentMillis = millis();
-  
-  if ((currentMillis - startMillis) >= 500)  //test whether the period has elapsed
+  currMillis = millis();
+
+  // Opdater lift højde hvert 200ms.
+  if ((currMillis - prevMillis200ms) >= 200)
   {
-    float tempVar1 = afstandTilLift();
-    Serial.printf("Lift: %.2f mm \t Kegle: %.2f \t Radius: %.2f \n", afstandTilKegle(), tempVar1, beregnAfstandTilKegle(tempVar1));
-    startMillis = currentMillis;  //IMPORTANT to save the start time of the current LED brightness
+    sidsteLiftH = sendData.liftHeight;
+    sendData.liftHeight = afstandTilLift();
+    sendData.kegleRadius = beregnAfstandTilKegle(sendData.liftHeight);
+    prevMillis200ms = currMillis;
+  }
+
+  switch (progCnt)
+  {
+    case 1: // Step 1 er en scanning efter keglen.
+      Serial.println("Case 1 - Lokalisere kegle.");
+      lokaliserKegle();
+      progCnt = 2;
+      break;
+
+    case 2: // Step 2 er vurdering af om afstands afvigelsen er høj nok til at kræve justering.
+      Serial.print("Case 2 - Afvigelsesvurdering");
+      // Hvis kegleposition er ok gå til case 4.
+      if ((sendData.laengdeAfvigelse < (1 * minKegleAfvigelse)) && (sendData.laengdeAfvigelse > (-1 * minKegleAfvigelse))) {
+        progCnt = 4;
+        Serial.print("Sender videre til case 4");
+        // Hvis kegle position ikke er ok og keglen ikke er igang med at dreje.
+      } else if ((recvData.status != "turning") && (recvData.status != "standby")) {
+        sendData.cmd = "turnKegle";
+        sendDataFunc();
+      } else if (recvData.status == "turning") {
+
+      }
+      // Main loop køre denne case ind til standby status modtages.
+      if (recvData.status == "standby") {
+        progCnt = 3;
+        recvData.status = "";
+      }
+      break;
+
+    case 3:
+      // Sæt keglen igang med at køre fremad, hvis den ikke er igang med dette.
+      Serial.print("case 3");
+      if ((recvData.status != "driving") && (recvData.status != "standby")) {
+        sendData.cmd = "driveKegle";
+        sendDataFunc();
+      }
+      // Main loop kører denne case ind til standby status modtages.
+      if (recvData.status == "standby") {
+        progCnt = 4;
+      }
+      break;
+
+    case 4:
+      Serial.print("case 4");
+      float forskel;
+      forskel = abs(sendData.liftHeight - sidsteLiftH);
+
+      if (forskel > minLiftForskel) {
+        Serial.printf("Lifthøjde ændring over %.2f \n", forskel);
+        while ((abs(afstandTilLift() - sidsteLiftH) > forskel)) {
+          sidsteLiftH = afstandTilLift();
+          Serial.printf("Ikke stabiliseret nok; %.2f \t", sidsteLiftH);
+        }
+        progCnt = 1;
+      } else {
+        if ((currMillis - prevMillis1000ms) >= 200) {
+          Serial.println("Afventer lifthøjde ændring...");
+          prevMillis1000ms = currMillis;
+        }
+      }
+      break;
+
+    default:
+      break;
   }
 }

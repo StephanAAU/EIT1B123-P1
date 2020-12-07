@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "motor.h"
 #include "pinout.h"
+#include "ultra.h"
 
 int Pwm1Value = 100;
 int Pwm2Value = 100;
@@ -43,14 +44,14 @@ void stopMotor(int motor) {
   updatePWMValues();
 }
 
-void drive(int cm) {
+void drive(int mm) {
   stopMotors();
 
   Pwm1Value = 100;
   Pwm2Value = 100;
   driving = true;
 
-  int k = cm * 30; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
+  int k = (mm/100) * 400; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
 
   driveStart = millis();
   driveEnd = driveStart + k;
@@ -64,12 +65,20 @@ void drive(int cm) {
   updatePWMValues();
 }
 
-void verifyDrive() {
+bool verifyDrive() {
   if (driving && driveEnd < millis()) {
     driving = false;
     Serial.println("verifyDrive stop");
     stopMotors();
+    return true;
   }
+  if (ultraGetDist() < obstacleDist) {
+    driving = false;
+    Serial.println("Obstacle stopped (verifyDrive)");
+    stopMotors();
+    return true;
+  }
+  return false;
 }
 
 void turn(int deg) {
@@ -79,7 +88,7 @@ void turn(int deg) {
   Pwm2Value = 100;
   turning = true;
 
-  int k = deg * 5; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
+  int k = deg * 10; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
 
   turnStart = millis();
   turnEnd = turnStart + k;
@@ -99,16 +108,18 @@ void turn(int deg) {
   updatePWMValues();
 }
 
-void verifyTurn() {
+bool verifyTurn() {
   if (turning && turnEnd < millis()) {
     turning = false;
     Serial.println("verifyTurn stop");
     stopMotors();
+    return true;
   }
+  return false;
 }
 
 void PwmSetup() {
-  const int freq = 1000;
+  const int freq = 100;
   const int resolution = 8;
 
   ledcSetup(MOTOR_PWM_1_CHANNEL, freq, resolution);

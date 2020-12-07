@@ -29,7 +29,7 @@ void modUret() {
   digitalWrite(dirPin, HIGH);
 
   // Spin motor speed
-  for(int x = 300; x > 0; x--)
+  for(int x = stepsPerRevolution*0.75; x > 0; x--)
   {
     findAfstand(x, &minValue, &stepLock);
     digitalWrite(stepPin, HIGH);
