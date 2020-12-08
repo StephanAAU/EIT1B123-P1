@@ -13,6 +13,7 @@ bool compassSetup() {
   }
 
   disableMPU6050();
+  return 1;
 }
 
 void printCompassSensorDetails()

@@ -17,10 +17,8 @@ uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0xF9, 0xF2, 0xEC};
 // Slave data structure - Sending from this device.
 typedef struct slaveData {
   String status;
-  float xpos;
-  float ypos;
   float forhindring;
-  int batPct;
+  float kegleVinkel;
 } slaveData;
 
 typedef struct masterData {
@@ -124,10 +122,7 @@ void setup() {
 
 	// Initial variabel værdier.
   sendData.status = "standby";
-  sendData.xpos = 0;
-  sendData.ypos = 0;
   sendData.forhindring = 0;
-  sendData.batPct = 0;
 }
 
 void loop() {
@@ -135,6 +130,7 @@ void loop() {
   static unsigned long prevMillis = 0;
   verifyTurn();
   verifyDrive();
+  sendData.kegleVinkel = getCompassHeading();
   curMillis = millis();
 
   // Statemachine based on data from master over the radio.
@@ -185,7 +181,7 @@ void loop() {
     sendDataFunc(READY);
   }
 
-	if ((curMillis - prevMillis) > 1000)  //test whether the period has elapsed
+	if ((curMillis - prevMillis) > 200)  //test whether the period has elapsed
 	{
   	sendDataFunc(READY);
     Serial.println("Idling..");

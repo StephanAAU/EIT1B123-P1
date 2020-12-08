@@ -8,6 +8,7 @@
 #include "rangefinder.h"
 #include "stepper.h"
 #include "pinout.h"
+#include "compass.h"
 
 uint8_t progCnt = 0;
 
@@ -27,10 +28,8 @@ typedef struct masterData {
 
 typedef struct slaveData {
   String status;
-  float xpos;
-  float ypos;
   float forhindring;
-  int batPct;
+  float kegleVinkel;
 
 } slaveData;
 
@@ -119,7 +118,7 @@ void lokaliserKegle() {
   medUret();
   modUret();
   sendData.laengdeAfvigelse = findAfvigendeLaengde(sendData.kegleRadius);
-  sendData.drejeKegleVinkel = findDrejeVinkel();
+  sendData.drejeKegleVinkel = (recvData.kegleVinkel - getCompassHeading()) + findDrejeVinkel();
   resetVinkel();
 }
 
