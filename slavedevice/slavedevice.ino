@@ -4,9 +4,11 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_now.h>
+#include <Adafruit_HMC5883_U.h>
 #include "pinout.h"
 #include "motor.h"
 #include "ultra.h"
+#include "compass.h"
 
 
 //uint8_t broadcastAddress[] = {0x3C, 0x71, 0xBF, 0x6A, 0x4F, 0x78};
@@ -119,6 +121,9 @@ void setup() {
 
 	initUltra();
 	espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
+  if (compassSetup()) {
+    Serial.println("Compass found!");
+  }
 
 	// Test variabels.
     sendData.status = "standby";
