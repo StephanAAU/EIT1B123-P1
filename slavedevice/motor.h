@@ -37,7 +37,7 @@ void drive(int cm);
 /*
  * Used together with drive(). Determines when to stop motors.
  */
-void verifyDrive();
+bool verifyDrive();
 
 /*
  * Drive motors to turn. Use negative deg to turn in opposite direction.
@@ -48,7 +48,7 @@ void turn(int deg);
 /*
  * Used together with turn(). Determines when to stop motors.
  */
-void verifyTurn();
+bool verifyTurn();
 
 void PwmSetup();
 

@@ -27,7 +27,7 @@ float afstandTilLift() {
   float y;
   y = sensor.read();
   if (sensor.timeoutOccurred()) { 
-    Serial.print(" TIMEOUT"); 
+    Serial.print("sensor1 TIMEOUT"); 
   }
   return y;
 }
@@ -36,7 +36,7 @@ float afstandTilKegle() {
   float y;
   y = sensor2.read();
   if (sensor2.timeoutOccurred()) { 
-    Serial.print(" TIMEOUT"); 
+    Serial.println("sensor2 TIMEOUT"); 
   }
   return y;
 }
