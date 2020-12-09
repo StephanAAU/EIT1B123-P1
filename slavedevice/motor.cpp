@@ -129,13 +129,13 @@ void motorSetup() {
 }
 
 void updateMotorDutyCycle(int motor1DutyCycle, int motor2DutyCycle) {
-  int pwm1 = ((float)(motor1DutyCycle + 1) / PWM_RESOLUTION);
-  int pwm2 = ((float)(motor2DutyCycle + 1) / PWM_RESOLUTION);
+  int pwm1 = motor1DutyCycle * PWM_RESOLUTION * PWM_RESOLUTION;
+  int pwm2 = motor2DutyCycle * PWM_RESOLUTION * PWM_RESOLUTION;
 
-  if (motor1DutyCycle = -1) {
+  if (motor1DutyCycle == -1) {
     pwm1 = pwmValue1;
   }
-  if (motor2DutyCycle = -1) {
+  if (motor2DutyCycle == -1) {
     pwm2 = pwmValue2;
   }
 
