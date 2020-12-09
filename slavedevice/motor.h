@@ -48,7 +48,7 @@ void turn(int deg);
  */
 bool verifyTurn();
 
-void PwmSetup();
+void motorSetup();
 
 
 /*

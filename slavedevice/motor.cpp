@@ -110,7 +110,7 @@ bool verifyTurn() {
   return false;
 }
 
-void PwmSetup() {
+void motorSetup() {
   const int freq = 100;
 
   ledcSetup(MOTOR_PWM_1_CHANNEL, freq, PWM_RESOLUTION);
@@ -118,6 +118,12 @@ void PwmSetup() {
 
   ledcAttachPin(MOTOR_PWM_1, MOTOR_PWM_1_CHANNEL);
   ledcAttachPin(MOTOR_PWM_2, MOTOR_PWM_2_CHANNEL);
+  
+  pinMode(MOTOR_INA1, OUTPUT);
+  pinMode(MOTOR_INB1, OUTPUT);
+
+  pinMode(MOTOR_INA2, OUTPUT);
+  pinMode(MOTOR_INB2, OUTPUT);
 }
 
 void updateMotorDutyCycle(int motor1DutyCycle, int motor2DutyCycle) {

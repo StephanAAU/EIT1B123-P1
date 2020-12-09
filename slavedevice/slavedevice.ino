@@ -105,13 +105,7 @@ void setup() {
 
 	espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
 
-	pinMode(MOTOR_INA1, OUTPUT);
-	pinMode(MOTOR_INB1, OUTPUT);
-
-	pinMode(MOTOR_INA2, OUTPUT);
-	pinMode(MOTOR_INB2, OUTPUT);
-
-	PwmSetup();
+  motorSetup();
 	updateMotorDutyCycle(40, 40);
 
 	initUltra();
