@@ -112,7 +112,7 @@ void setup() {
 	pinMode(MOTOR_INB2, OUTPUT);
 
 	PwmSetup();
-	updatePWMValues();
+	updateMotorDutyCycle(40, 40);
 
 	initUltra();
 	

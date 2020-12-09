@@ -3,8 +3,8 @@
 #include "pinout.h"
 #include "ultra.h"
 
-int Pwm1Value = 100;
-int Pwm2Value = 100;
+int pwmValue1;
+int pwmValue2;
 
 int turnStart = 0;
 int turnEnd = 0;
@@ -15,8 +15,6 @@ int driveEnd = 0;
 bool driving = false;
 
 void motorsRun() {
-  Pwm1Value = 100;
-  Pwm2Value = 100;
 
   digitalWrite(MOTOR_INA1, LOW);
   digitalWrite(MOTOR_INB1, HIGH);
@@ -24,7 +22,7 @@ void motorsRun() {
   digitalWrite(MOTOR_INA2, LOW);
   digitalWrite(MOTOR_INB2, HIGH);
 
-  updatePWMValues();
+  updateMotorDutyCycle(40, 40);
 }
 
 void stopMotors() {
@@ -36,19 +34,15 @@ void stopMotors() {
 
 void stopMotor(int motor) {
   if (motor == 1) {
-    Pwm1Value = 0;
+    updateMotorDutyCycle(0, -1);
   } else if (motor == 2) {
-    Pwm2Value = 0;
+    updateMotorDutyCycle(-1, 0);
   }
-  
-  updatePWMValues();
 }
 
 void drive(int mm) {
   stopMotors();
 
-  Pwm1Value = 100;
-  Pwm2Value = 100;
   driving = true;
 
   int k = (mm/100) * 400; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
@@ -62,7 +56,7 @@ void drive(int mm) {
   digitalWrite(MOTOR_INA2, LOW);
   digitalWrite(MOTOR_INB2, HIGH);
   
-  updatePWMValues();
+  updateMotorDutyCycle(40, 40);
 }
 
 bool verifyDrive() {
@@ -84,8 +78,6 @@ bool verifyDrive() {
 void turn(int deg) {
   stopMotors();
 
-  Pwm1Value = 100;
-  Pwm2Value = 100;
   turning = true;
 
   int k = deg * 10; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
@@ -105,7 +97,7 @@ void turn(int deg) {
     digitalWrite(MOTOR_INB2, LOW);
   }
 
-  updatePWMValues();
+  updateMotorDutyCycle(40, 40);
 }
 
 bool verifyTurn() {
@@ -120,16 +112,28 @@ bool verifyTurn() {
 
 void PwmSetup() {
   const int freq = 100;
-  const int resolution = 8;
 
-  ledcSetup(MOTOR_PWM_1_CHANNEL, freq, resolution);
-  ledcSetup(MOTOR_PWM_2_CHANNEL, freq, resolution);
+  ledcSetup(MOTOR_PWM_1_CHANNEL, freq, PWM_RESOLUTION);
+  ledcSetup(MOTOR_PWM_2_CHANNEL, freq, PWM_RESOLUTION);
 
   ledcAttachPin(MOTOR_PWM_1, MOTOR_PWM_1_CHANNEL);
   ledcAttachPin(MOTOR_PWM_2, MOTOR_PWM_2_CHANNEL);
 }
 
-void updatePWMValues() {
-  ledcWrite(MOTOR_PWM_1_CHANNEL, Pwm1Value);
-  ledcWrite(MOTOR_PWM_2_CHANNEL, Pwm2Value);
+void updateMotorDutyCycle(int motor1DutyCycle, int motor2DutyCycle) {
+  int pwm1 = ((float)(motor1DutyCycle + 1) / PWM_RESOLUTION);
+  int pwm2 = ((float)(motor2DutyCycle + 1) / PWM_RESOLUTION);
+
+  if (motor1DutyCycle = -1) {
+    pwm1 = pwmValue1;
+  }
+  if (motor2DutyCycle = -1) {
+    pwm2 = pwmValue2;
+  }
+
+  pwmValue1 = pwm1;
+  pwmValue2 = pwm2;
+  
+  ledcWrite(MOTOR_PWM_1_CHANNEL, pwm1);
+  ledcWrite(MOTOR_PWM_2_CHANNEL, pwm2);
 }

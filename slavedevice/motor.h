@@ -1,9 +1,7 @@
 #ifndef MOTOR_H_
 #define MOTOR_H_
 
-
-extern int Pwm1Value;
-extern int Pwm2Value;
+const int PWM_RESOLUTION = 8;
 
 extern int turnStart;
 extern int turnEnd;
@@ -52,7 +50,11 @@ bool verifyTurn();
 
 void PwmSetup();
 
-void updatePWMValues();
+
+/*
+ * Update duty cycle for motor 1 and motor 2. Use -1 to leave unchanged.
+ */
+void updateMotorDutyCycle(int motor1DutyCycle, int motor2DutyCycle);
 
 
 #endif // MOTOR_H_
