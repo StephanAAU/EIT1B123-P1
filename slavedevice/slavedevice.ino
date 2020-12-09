@@ -106,7 +106,6 @@ void setup() {
 	espNowSetup(); // Funktion der konfigurere og starter ESP-NOW protokollen.
 
   motorSetup();
-	updateMotorDutyCycle(40, 40);
 
 	initUltra();
 	

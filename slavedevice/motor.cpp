@@ -124,6 +124,8 @@ void motorSetup() {
 
   pinMode(MOTOR_INA2, OUTPUT);
   pinMode(MOTOR_INB2, OUTPUT);
+
+  updateMotorDutyCycle(0, 0);
 }
 
 void updateMotorDutyCycle(int motor1DutyCycle, int motor2DutyCycle) {
