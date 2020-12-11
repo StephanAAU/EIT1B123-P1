@@ -9,11 +9,60 @@
 VL53L1X sensor;
 VL53L1X sensor2;
 
+void afstandTest() {
+  int s1Timeouts = 0;
+  int s2Timeouts = 0;
+  
+  while (1) {
+    float s1 = sensor.read();
+    float s2 = sensor2.read();
+
+    Serial.print("s1: ");
+    if (sensor.timeoutOccurred()) {
+      Serial.print("s1 timeout");
+      s1Timeouts++;
+
+      if (s1Timeouts > 5) {
+        if (sensor.init()) {
+          Serial.print("init ok");
+          s1Timeouts = 0;
+        } else {
+          Serial.print("init fail");
+        }
+      }
+    } else {
+      Serial.print(s1);
+    }
+    Serial.print(" - s2:");
+    if (sensor2.timeoutOccurred()) {
+      Serial.print("s2 timeout");
+      s2Timeouts++;
+
+      if (s2Timeouts > 5) {
+        if (sensor2.init()) {
+          Serial.print("init ok");
+          s2Timeouts = 0;
+        } else {
+          Serial.print("init fail");
+        }
+      }
+    } else {
+      Serial.print(s2);
+    }
+    Serial.println("");
+    
+    delay(500);
+  }
+}
+
 void findAfstand(int x, float *minValue, float *stepLock) {
   float y;
   y = sensor2.read();
-  Serial.printf("Y: %.2f", y);
-  if (y < *minValue) {
+  if (sensor2.timeoutOccurred()) {
+      Serial.print("s2 timeout");
+  }
+  
+  if (y < *minValue && y > 0) {
     *minValue = y;
     *stepLock = x;
     Serial.println("minValue er ");
@@ -51,11 +100,8 @@ void initRangefinders() {
   
   digitalWrite(SHDN_RANGE1,LOW);
   digitalWrite(SHDN_RANGE2,LOW);
-  
   delay(100);
 	digitalWrite(SHDN_RANGE1,HIGH);
-  delay(100);
-  
   Wire.begin();
   Wire.setClock(400000); // use 400 kHz I2C
 	delay(100);
@@ -83,13 +129,13 @@ void initRangefinders() {
 	sensor.startContinuous(50);
 
 	// Preparation of pins.
-	delay(100);
+	delay(10);
 	digitalWrite(SHDN_RANGE2,HIGH);
-	delay(100);
+	delay(500);
 	sensor2.setTimeout(500);
 	while (!sensor2.init())	{
 	  Serial.println("Failed to detect and initialize sensor 2!");
-		delay(500);
+    delay(500);
 	}
   delay(100);
 	// Change sensor address to allow multi connection.
