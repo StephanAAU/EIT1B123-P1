@@ -5,7 +5,11 @@
 
 Adafruit_HMC5883_Unified compass = Adafruit_HMC5883_Unified();
 
-bool compassSetup() {
+bool MASTER;
+
+bool compassSetup(bool master) {
+  MASTER = master;
+  
   while (!compass.begin())
   {
     Serial.println("HMC5883 not found");
@@ -36,7 +40,12 @@ float getCompassHeading() {
   sensors_event_t event;
   compass.getEvent(&event);
 
-  float heading = atan2(event.magnetic.y, -event.magnetic.z);
+  float heading;
+  if (MASTER) {
+    heading = atan2(event.magnetic.x, -event.magnetic.y);
+  } else {
+    heading = atan2(event.magnetic.x, -event.magnetic.z);
+  }
 
   float headingDeg = heading * 180 / M_PI;
   if (headingDeg < 0) {

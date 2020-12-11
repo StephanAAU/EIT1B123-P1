@@ -5,7 +5,7 @@
 
 extern Adafruit_HMC5883_Unified compass;
 
-bool compassSetup();
+bool compassSetup(bool master);
 void printCompassSensorDetails();
 float getCompassHeading();
 void disableMPU6050();
