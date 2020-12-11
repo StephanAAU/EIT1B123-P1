@@ -8,6 +8,52 @@
 VL53L1X sensor;
 VL53L1X sensor2;
 
+void afstandTest() {
+  int s1Timeouts = 0;
+  int s2Timeouts = 0;
+  
+  while (1) {
+    float s1 = sensor.read();
+    float s2 = sensor2.read();
+
+    Serial.print("s1: ");
+    if (sensor.timeoutOccurred()) {
+      Serial.print("s1 timeout");
+      s1Timeouts++;
+
+      if (s1Timeouts > 5) {
+        if (sensor.init()) {
+          Serial.print("init ok");
+          s1Timeouts = 0;
+        } else {
+          Serial.print("init fail");
+        }
+      }
+    } else {
+      Serial.print(s1);
+    }
+    Serial.print(" - s2:");
+    if (sensor2.timeoutOccurred()) {
+      Serial.print("s2 timeout");
+      s2Timeouts++;
+
+      if (s2Timeouts > 5) {
+        if (sensor2.init()) {
+          Serial.print("init ok");
+          s2Timeouts = 0;
+        } else {
+          Serial.print("init fail");
+        }
+      }
+    } else {
+      Serial.print(s2);
+    }
+    Serial.println("");
+    
+    delay(500);
+  }
+}
+
 void findAfstand(int x, float *minValue, float *stepLock) {
   float y;
   y = sensor2.read();
