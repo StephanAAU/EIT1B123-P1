@@ -105,6 +105,8 @@ void setup () {
 
   stepperSetup();
 
+  compassSetup(true);
+
   sendData.liftHeight = 1;
   sendData.kegleRadius = 2;
   sendData.beregnAfstandTilKegle = 3;
