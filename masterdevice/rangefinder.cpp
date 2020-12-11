@@ -57,7 +57,11 @@ void afstandTest() {
 void findAfstand(int x, float *minValue, float *stepLock) {
   float y;
   y = sensor2.read();
-  if (y < *minValue) {
+  if (sensor2.timeoutOccurred()) {
+      Serial.print("s2 timeout");
+  }
+  
+  if (y < *minValue && y > 0) {
     *minValue = y;
     *stepLock = x;
     Serial.println("minValue er ");
