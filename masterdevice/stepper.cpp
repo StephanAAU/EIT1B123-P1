@@ -20,7 +20,9 @@ void medUret() {
   {
     findAfstand(x, &minValue, &stepLock);
     digitalWrite(stepPin, HIGH);
+    delay(1);
     digitalWrite(stepPin, LOW);
+    delay(1);
   }
 }
 
@@ -33,7 +35,9 @@ void modUret() {
   {
     findAfstand(x, &minValue, &stepLock);
     digitalWrite(stepPin, HIGH);
+    delay(1);
     digitalWrite(stepPin, LOW);
+    delay(1);
   }
 }
 

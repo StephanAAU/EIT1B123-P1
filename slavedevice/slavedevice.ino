@@ -83,6 +83,7 @@ void espNowSetup() {
 
 // Send data function.
 void sendDataFunc(int status) {
+  if (status == DONE) { sendData.status = "done"; recvData.cmd = "standby"; }
   if (status == DRIVE) { sendData.status = "driving"; recvData.cmd = "busy"; }
   if (status == TURN) { sendData.status = "turning"; recvData.cmd = "busy"; }
   if (status == BUSY) { sendData.status = "busy"; recvData.cmd = "busy"; }
@@ -108,11 +109,9 @@ void setup() {
   motorSetup();
 
 	initUltra();
-	
 	if (compassSetup()) {
 		Serial.println("Compass found!");
 	}
-
 	// Initial variabel værdier.
   sendData.status = "standby";
   sendData.forhindring = 0;
@@ -132,6 +131,7 @@ void loop() {
   if (recvData.cmd == "ultraDist")  {
     sendDataFunc(BUSY);
     sendData.forhindring = ultraGetDist();
+    Serial.printf("Distance measurement: %.2f \n", sendData.forhindring);
     sendData.status = "standby";
     sendDataFunc(READY);
   }
@@ -158,7 +158,7 @@ void loop() {
     sendDataFunc(TURN);
     turn(recvData.drejeKegleVinkel);
     while (!verifyTurn()) {};       
-    sendDataFunc(READY);
+    sendDataFunc(DONE);
   }
   // Ikke blokerende funktion kører baseret på argument 1 fra radio.
   if (recvData.cmd == "drive")  {
@@ -171,7 +171,7 @@ void loop() {
     sendDataFunc(DRIVE);
     drive(recvData.laengdeAfvigelse);
     while (!verifyDrive()) {};
-    sendDataFunc(READY);
+    sendDataFunc(DONE);
   }
 
 	if ((curMillis - prevMillis) > 200)  //test whether the period has elapsed

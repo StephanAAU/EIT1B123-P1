@@ -97,7 +97,7 @@ void turn(int deg) {
     digitalWrite(MOTOR_INB2, LOW);
   }
 
-  updateMotorDutyCycle(40, 40);
+  updateMotorDutyCycle(15, 15);
 }
 
 bool verifyTurn() {

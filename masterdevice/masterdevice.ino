@@ -145,6 +145,16 @@ void checkSerial() {
   }
 
   // Debug kommando til at sende data.
+  if (cmd == "ultraDist") {
+    sendData.cmd = "ultraDist";
+    Serial.println("\n\nSending data from struct");
+    sendDataFunc();
+    delay(500);
+    Serial.printf("ultra dist: %.2f \n", recvData.forhindring);
+    delay(1000);
+  }
+
+  // Debug kommando til at sende data.
   if (cmd == "dataSend") {
     Serial.println("\n\nSending data from struct");
     sendDataFunc();
@@ -166,7 +176,7 @@ void loop () {
   static unsigned long prevMillis1000ms = 0;    // Timestamp til hvert 1s
   static unsigned long currMillis;  // Temp. timestamp
   static float sidsteLiftH = 0;
-
+  
   checkSerial();
   currMillis = millis();
 
@@ -177,6 +187,7 @@ void loop () {
     sendData.liftHeight = afstandTilLift();
     sendData.kegleRadius = beregnAfstandTilKegle(sendData.liftHeight);
     prevMillis200ms = currMillis;
+    Serial.printf("l: %.2f \t k: %.2f \n", sendData.liftHeight, afstandTilKegle());
   }
 
   switch (progCnt)
@@ -194,14 +205,14 @@ void loop () {
         progCnt = 4;
         Serial.print("Sender videre til case 4");
         // Hvis kegle position ikke er ok og keglen ikke er igang med at dreje.
-      } else if ((recvData.status != "turning") && (recvData.status != "standby")) {
+      } else if ((recvData.status != "turning") && (recvData.status != "done")) {
         sendData.cmd = "turnKegle";
         sendDataFunc();
       } else if (recvData.status == "turning") {
 
       }
       // Main loop køre denne case ind til standby status modtages.
-      if (recvData.status == "standby") {
+      if (recvData.status == "done") {
         progCnt = 3;
         recvData.status = "";
       }
@@ -210,12 +221,12 @@ void loop () {
     case 3:
       // Sæt keglen igang med at køre fremad, hvis den ikke er igang med dette.
       Serial.print("case 3");
-      if ((recvData.status != "driving") && (recvData.status != "standby")) {
+      if ((recvData.status != "driving") && (recvData.status != "done")) {
         sendData.cmd = "driveKegle";
         sendDataFunc();
       }
-      // Main loop kører denne case ind til standby status modtages.
-      if (recvData.status == "standby") {
+      // Main loop kører denne case ind til done status modtages.
+      if (recvData.status == "done") {
         progCnt = 4;
       }
       break;

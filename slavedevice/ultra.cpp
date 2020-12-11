@@ -22,7 +22,7 @@ float ultraGetDist() {
 	// Read the echoPin, pulseIn() returns the duration (length of the pulse) in microseconds:
 	duration = pulseIn(ECHOPIN, HIGH);
 	// Calculate the distance:
-	distance = duration * 0.034 / 2;
+	distance = (duration * 0.034 / 2)*10;
 
 	return distance;
 }

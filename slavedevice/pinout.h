@@ -14,9 +14,10 @@ const int MOTOR_INB2 = 14; // OUTPUT
 // Ultrasonic pins
 const int TRIGPIN = 2; // INPUT
 const int ECHOPIN = 5; // OUTPUT
-const float obstacleDist = 10; // Minimum distance to obstacle in front [cm]
+const float obstacleDist = 500; // Minimum distance to obstacle in front [mm]
 
 // Defines for robot states
+#define DONE 4
 #define DRIVE 3
 #define TURN 2
 #define BUSY 1

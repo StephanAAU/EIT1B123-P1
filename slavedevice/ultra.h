@@ -2,6 +2,6 @@
 #define ULTRA_H_
 
 void initUltra();
-int ultraGetDist();
+float ultraGetDist();
 
 #endif // ULTRA_H_

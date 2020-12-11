@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "rangefinder.h"
 
 #include <math.h>
@@ -11,6 +12,7 @@ VL53L1X sensor2;
 void findAfstand(int x, float *minValue, float *stepLock) {
   float y;
   y = sensor2.read();
+  Serial.printf("Y: %.2f", y);
   if (y < *minValue) {
     *minValue = y;
     *stepLock = x;
@@ -46,18 +48,24 @@ void initRangefinders() {
 	// Preparation of pins.
 	pinMode(SHDN_RANGE1,OUTPUT);
 	pinMode(SHDN_RANGE2,OUTPUT);
-  pinMode(SHDN_RANGE1,LOW);
-  pinMode(SHDN_RANGE2,LOW);
+  
+  digitalWrite(SHDN_RANGE1,LOW);
+  digitalWrite(SHDN_RANGE2,LOW);
+  
   delay(100);
-	pinMode(SHDN_RANGE1,HIGH);
+	digitalWrite(SHDN_RANGE1,HIGH);
+  delay(100);
+  
   Wire.begin();
   Wire.setClock(400000); // use 400 kHz I2C
-	delay(500);
+	delay(100);
+ 
 	sensor.setTimeout(500);
-	if (!sensor.init())	{
-	Serial.println("Failed to detect and initialize sensor 1!");
-		while (1);
+	while (!sensor.init())	{
+	  Serial.println("Failed to detect and initialize sensor 1!");
+    delay(500);
 	}
+  delay(100);
 	// Change sensor address to allow multi connection.
 	sensor.setAddress(0x40);
 
@@ -75,14 +83,15 @@ void initRangefinders() {
 	sensor.startContinuous(50);
 
 	// Preparation of pins.
-	delay(10);
-	pinMode(SHDN_RANGE2,HIGH);
-	delay(500);
+	delay(100);
+	digitalWrite(SHDN_RANGE2,HIGH);
+	delay(100);
 	sensor2.setTimeout(500);
-	if (!sensor2.init())	{
-	Serial.println("Failed to detect and initialize sensor 2!");
-		while (1);
+	while (!sensor2.init())	{
+	  Serial.println("Failed to detect and initialize sensor 2!");
+		delay(500);
 	}
+  delay(100);
 	// Change sensor address to allow multi connection.
 	sensor2.setAddress(0x41);
 
