@@ -120,7 +120,7 @@ void lokaliserKegle() {
   medUret();
   modUret();
   sendData.laengdeAfvigelse = findAfvigendeLaengde(sendData.kegleRadius);
-  sendData.drejeKegleVinkel = (recvData.kegleVinkel - getCompassHeading()) + findDrejeVinkel();
+  sendData.drejeKegleVinkel = (recvData.kegleVinkel - getCompassHeading(NULL)) + findDrejeVinkel();
   resetVinkel();
 }
 
@@ -140,7 +140,7 @@ void checkSerial() {
   }
 
   // Debug kommando'er som håndteres ens.
-  if (cmd == "motorsRun" || cmd == "stopMotors" || cmd == "turn" || cmd == "drive") {
+  if (cmd == "motorsRun" || cmd == "stopMotors" || cmd == "turn" || cmd == "drive" || cmd == "calibrate") {
     sendData.cmd = cmd;
     sendData.arg1 = argument.toInt();
     sendDataFunc();

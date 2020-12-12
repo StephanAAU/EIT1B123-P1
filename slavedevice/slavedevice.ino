@@ -36,6 +36,8 @@ slaveData sendData;
 masterData recvData;
 esp_now_peer_info_t peerInfo;
 
+struct DistortionValues distortionValues;
+
 // Callback funktion der bruges til at sende data.
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   Serial.print("Last Packet Send Status:\t");
@@ -88,6 +90,7 @@ void sendDataFunc(int status) {
   if (status == TURN) { sendData.status = "turning"; recvData.cmd = "busy"; }
   if (status == BUSY) { sendData.status = "busy"; recvData.cmd = "busy"; }
   if (status == READY) { sendData.status = "standby"; recvData.cmd = "standby"; }
+  if (status == CALIBRATE) { sendData.status = "calibrate"; recvData.cmd = "calibrate"; }
 
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &sendData, sizeof(sendData));
 
@@ -109,7 +112,7 @@ void setup() {
   motorSetup();
 
 	initUltra();
-	if (compassSetup()) {
+	if (compassSetup(0)) {
 		Serial.println("Compass found!");
 	}
 	// Initial variabel værdier.
@@ -117,16 +120,71 @@ void setup() {
   sendData.forhindring = 0;
 }
 
+int i = 0;
+struct MinMaxVector minMaxVector;
+
+/* FOR BILAG 21
+struct Vector pts[2000];
+int compassPoints = 0;
+void printCompassPoints() {
+  if (compassPoints > 0) {
+    for(int j = compassPoints; j < n; j++) {
+      Serial.printf("%.02f,%.02f,%.02f", pts[j].x, pts[j].y, pts[j].z);
+      Serial.println("");
+    }
+
+    struct DistortionValues dv = distortionValues;
+    Serial.printf("oX=%.02f;oY=%.02f;oZ=%.02f;sX=%.02f;sY=%.02f;sZ=%.02f;", dv.oX, dv.oY, dv.oZ, dv.sX, dv.sY, dv.sZ);
+    Serial.println("");
+
+    delay(10000);
+  }
+}
+void getCompassPoint(sensors_event_t *e) {
+  pts[n].x = (*e).magnetic.x;
+  pts[n].y = (*e).magnetic.y;
+  pts[n].z = (*e).magnetic.z;
+}
+*/
+
 void loop() {
+  //printCompassPoints(); FOR BILAG 21
+
   static unsigned long curMillis = 0;
   static unsigned long prevMillis = 0;
   verifyTurn();
   verifyDrive();
-  sendData.kegleVinkel = getCompassHeading();
+  sendData.kegleVinkel = getCompassHeading(NULL);
   curMillis = millis();
 
   // Statemachine based on data from master over the radio.
 
+  // Funktion som klaibrer kompasset
+  if (recvData.cmd == "calibrate")  {
+    Serial.println("calibrating...");
+    sendDataFunc(CALIBRATE);
+
+    struct MinMaxVector mmv;
+
+    // turn around 5 times
+    turn(360*5);
+
+    int i = 0;
+    while (!verifyTurn()) {
+      sensors_event_t e = getCompassEvent();
+      updateMinMaxVector(&mmv, &e);
+      //getCompassPoint(&e); FOR BILAG 21
+      delay(10); // 100 compass samples per second
+    }
+    struct DistortionValues dv = getDistortionValues(&mmv);
+
+    distortionValues = dv;
+    
+    sendData.forhindring = 10000;
+    sendData.status = "calibrate";
+    sendDataFunc(READY);
+    Serial.println("done calibrating.");
+  }
   // Funktion der sender en enkelt ultralydsmåling
   if (recvData.cmd == "ultraDist")  {
     sendDataFunc(BUSY);
