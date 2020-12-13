@@ -50,7 +50,7 @@ float getCompassHeading(struct DistortionValues *dv) {
   float x = event.magnetic.x;
   float y = event.magnetic.y;
   float z = event.magnetic.z;
-  if (dv) {
+  if (dv && ((*dv).set)) {
     Vector v = getCorrectedCompassReadings(&event, dv);
     x = v.x;
     y = v.y;

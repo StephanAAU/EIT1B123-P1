@@ -93,13 +93,14 @@ void sendDataFunc(int status) {
   if (status == CALIBRATE) { sendData.status = "calibrate"; recvData.cmd = "calibrate"; }
 
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &sendData, sizeof(sendData));
-
+/*
   if (result == ESP_OK) {
     Serial.println("Sent with success");
   }
   else {
     Serial.println("Error sending the data");
   }
+*/
 }
 
 void setup() {
@@ -118,6 +119,7 @@ void setup() {
 	// Initial variabel værdier.
   sendData.status = "standby";
   sendData.forhindring = 0;
+  sendData.kegleVinkel = 0;
 }
 
 int i = 0;
@@ -154,7 +156,7 @@ void loop() {
   static unsigned long prevMillis = 0;
   verifyTurn();
   verifyDrive();
-  sendData.kegleVinkel = getCompassHeading(NULL);
+  sendData.kegleVinkel = getCompassHeading(&distortionValues);
   curMillis = millis();
 
   // Statemachine based on data from master over the radio.
@@ -167,7 +169,7 @@ void loop() {
     struct MinMaxVector mmv;
 
     // turn around 5 times
-    turn(360*5);
+    turn(360*10);
 
     int i = 0;
     while (!verifyTurn()) {
@@ -177,6 +179,7 @@ void loop() {
       delay(10); // 100 compass samples per second
     }
     struct DistortionValues dv = getDistortionValues(&mmv);
+    dv.set = true;
 
     distortionValues = dv;
     
@@ -215,9 +218,21 @@ void loop() {
   if (recvData.cmd == "turnKegle")  {   
     sendDataFunc(TURN);
     turn(recvData.drejeKegleVinkel);
-    while (!verifyTurn()) {};       
+    while (!verifyTurn()) {};      
     sendDataFunc(DONE);
   }
+
+  // Blokerende funktion der drejer baseret på kompas
+  if (recvData.cmd == "turnCompass")  {   
+    sendDataFunc(TURN);
+    turn(recvData.arg1);
+    float startPos = getCompassHeading(&distortionValues);
+    delay(100);
+    while (abs(getCompassHeading(&distortionValues) - startPos) < recvData.arg1) { };
+    stopMotors();       
+    sendDataFunc(DONE);
+  }
+
   // Ikke blokerende funktion kører baseret på argument 1 fra radio.
   if (recvData.cmd == "drive")  {
     sendDataFunc(BUSY);
@@ -232,7 +247,7 @@ void loop() {
     sendDataFunc(DONE);
   }
 
-	if ((curMillis - prevMillis) > 200)  //test whether the period has elapsed
+	if ((curMillis - prevMillis) > 1000)  //test whether the period has elapsed
 	{
   	sendDataFunc(READY);
     Serial.println("Idling..");

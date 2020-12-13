@@ -12,7 +12,7 @@ VL53L1X sensor2;
 void afstandTest() {
   int s1Timeouts = 0;
   int s2Timeouts = 0;
-  
+
   while (1) {
     float s1 = sensor.read();
     float s2 = sensor2.read();
@@ -50,8 +50,26 @@ void afstandTest() {
       Serial.print(s2);
     }
     Serial.println("");
-    
+
     delay(500);
+  }
+}
+
+void testSensor() {
+  int timer = 50;
+
+  float y;
+  while (1) {
+    y = sensor2.read();
+    if (sensor2.timeoutOccurred()) {
+      Serial.println("s2 timeout");
+    } else {
+      Serial.print("s2: ");
+      Serial.println(y);
+    }
+
+    delay(timer);
+    timer = timer * 2;
   }
 }
 
@@ -59,10 +77,10 @@ void findAfstand(int x, float *minValue, float *stepLock) {
   float y;
   y = sensor2.read();
   if (sensor2.timeoutOccurred()) {
-      Serial.print("s2 timeout");
+    Serial.println("s2 timeout");
   }
-  
-  if (y < *minValue && y > 0) {
+
+  if ((y < *minValue) && (y > 0)) {
     *minValue = y;
     *stepLock = x;
     Serial.println("minValue er ");
@@ -71,87 +89,90 @@ void findAfstand(int x, float *minValue, float *stepLock) {
 }
 
 float beregnAfstandTilKegle(float x) {
-    return (tan(0.5235988)*x);
+  return (tan(0.5235988) * x);
 }
 
 float afstandTilLift() {
   float y;
   y = sensor.read();
-  if (sensor.timeoutOccurred()) { 
-    Serial.print("sensor1 TIMEOUT"); 
+  if (sensor.timeoutOccurred()) {
+    Serial.print("sensor1 TIMEOUT");
   }
-  return y;
+  return (y+ 50);
 }
 
 float afstandTilKegle() {
   float y;
   y = sensor2.read();
-  if (sensor2.timeoutOccurred()) { 
-    Serial.println("sensor2 TIMEOUT"); 
+  if (sensor2.timeoutOccurred()) {
+    Serial.println("sensor2 TIMEOUT");
   }
   return y;
 }
 
 void initRangefinders() {
-	// Initializing rangefinger 1.
-	// Preparation of pins.
-	pinMode(SHDN_RANGE1,OUTPUT);
-	pinMode(SHDN_RANGE2,OUTPUT);
-  
-  digitalWrite(SHDN_RANGE1,LOW);
-  digitalWrite(SHDN_RANGE2,LOW);
+  // Initializing rangefinger 1.
+  // Preparation of pins.
+  pinMode(SHDN_RANGE1, OUTPUT);
+  pinMode(SHDN_RANGE2, OUTPUT);
+
+  digitalWrite(SHDN_RANGE1, LOW);
+  digitalWrite(SHDN_RANGE2, LOW);
   delay(100);
-	digitalWrite(SHDN_RANGE1,HIGH);
+  digitalWrite(SHDN_RANGE1, HIGH);
   Wire.begin();
   Wire.setClock(400000); // use 400 kHz I2C
-	delay(100);
- 
-	sensor.setTimeout(500);
-	while (!sensor.init())	{
-	  Serial.println("Failed to detect and initialize sensor 1!");
-    delay(500);
-	}
   delay(100);
-	// Change sensor address to allow multi connection.
-	sensor.setAddress(0x40);
 
-	// Use long distance mode and allow up to 50000 us (50 ms) for a measurement.
-	// You can change these settings to adjust the performance of the sensor, but
-	// the minimum timing budget is 20 ms for short distance mode and 33 ms for
-	// medium and long distance modes. See the VL53L1X datasheet for more
-	// information on range and timing limits.
-	sensor.setDistanceMode(VL53L1X::Long);
-	sensor.setMeasurementTimingBudget(50000);
-
-	// Start continuous readings at a rate of one measurement every 50 ms (the
-	// inter-measurement period). This period should be at least as long as the
-	// timing budget.
-	sensor.startContinuous(50);
-
-	// Preparation of pins.
-	delay(10);
-	digitalWrite(SHDN_RANGE2,HIGH);
-	delay(500);
-	sensor2.setTimeout(500);
-	while (!sensor2.init())	{
-	  Serial.println("Failed to detect and initialize sensor 2!");
+  sensor.setTimeout(500);
+  while (!sensor.init(true))	{
+    Serial.println("Failed to detect and initialize sensor 1!");
+    digitalWrite(SHDN_RANGE1, LOW);
     delay(500);
-	}
+    digitalWrite(SHDN_RANGE1, HIGH);
+    delay(10);
+  }
   delay(100);
-	// Change sensor address to allow multi connection.
-	sensor2.setAddress(0x41);
+  // Change sensor address to allow multi connection.
+  sensor.setAddress(0x40);
 
-	// Use long distance mode and allow up to 50000 us (50 ms) for a measurement.
-	// You can change these settings to adjust the performance of the sensor, but
-	// the minimum timing budget is 20 ms for short distance mode and 33 ms for
-	// medium and long distance modes. See the VL53L1X datasheet for more
-	// information on range and timing limits.
-	sensor2.setDistanceMode(VL53L1X::Long);
-	sensor2.setMeasurementTimingBudget(50000);
+  // Use long distance mode and allow up to 50000 us (50 ms) for a measurement.
+  // You can change these settings to adjust the performance of the sensor, but
+  // the minimum timing budget is 20 ms for short distance mode and 33 ms for
+  // medium and long distance modes. See the VL53L1X datasheet for more
+  // information on range and timing limits.
+  sensor.setDistanceMode(VL53L1X::Long);
+  sensor.setMeasurementTimingBudget(50000);
 
-	// Start continuous readings at a rate of one measurement every 50 ms (the
-	// inter-measurement period). This period should be at least as long as the
-	// timing budget.
-	sensor2.startContinuous(20);
-  
+  // Start continuous readings at a rate of one measurement every 50 ms (the
+  // inter-measurement period). This period should be at least as long as the
+  // timing budget.
+  sensor.startContinuous(50);
+
+  // Preparation of pins.
+  delay(10);
+  digitalWrite(SHDN_RANGE2, HIGH);
+  delay(500);
+  sensor2.setTimeout(500);
+  while (!sensor2.init(true))	{
+    Serial.println("Failed to detect and initialize sensor 2!");
+    delay(500);
+  }
+  delay(100);
+  // Change sensor address to allow multi connection.
+  sensor2.setAddress(0x41);
+
+  // Use long distance mode and allow up to 50000 us (50 ms) for a measurement.
+  // You can change these settings to adjust the performance of the sensor, but
+  // the minimum timing budget is 20 ms for short distance mode and 33 ms for
+  // medium and long distance modes. See the VL53L1X datasheet for more
+  // information on range and timing limits.
+  sensor2.setDistanceMode(VL53L1X::Long);
+  sensor2.setMeasurementTimingBudget(50000);
+
+  // Start continuous readings at a rate of one measurement every 50 ms (the
+  // inter-measurement period). This period should be at least as long as the
+  // timing budget.
+  sensor2.startContinuous(20);
+
 }

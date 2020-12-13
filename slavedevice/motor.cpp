@@ -80,7 +80,7 @@ void turn(int deg) {
 
   turning = true;
 
-  int k = deg * 10; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
+  int k = deg * 5; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
 
   turnStart = millis();
   turnEnd = turnStart + k;

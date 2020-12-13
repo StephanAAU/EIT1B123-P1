@@ -14,30 +14,30 @@ void stepperSetup() {
 void medUret() {
   // Set motor direction clockwise
   digitalWrite(dirPin, LOW);
-
+  delay(10);
   // Spin motor speed
   for(int x = 0; x < stepsPerRevolution*0.75; x++)
   {
     findAfstand(x, &minValue, &stepLock);
     digitalWrite(stepPin, HIGH);
-    delay(1);
+    delay(10);
     digitalWrite(stepPin, LOW);
-    delay(1);
+    delay(75);
   }
 }
 
 void modUret() {
   // Set motor direction counterclockwise
   digitalWrite(dirPin, HIGH);
-
+  delay(10);
   // Spin motor speed
   for(int x = stepsPerRevolution*0.75; x > 0; x--)
   {
     findAfstand(x, &minValue, &stepLock);
     digitalWrite(stepPin, HIGH);
-    delay(1);
+    delay(10);
     digitalWrite(stepPin, LOW);
-    delay(1);
+    delay(75);
   }
 }
 
@@ -56,7 +56,7 @@ float findAfvigendeLaengde(float akselsVaerdi) {
     y2 = sin(favPosition) * akselsVaerdi;
     B = y2 - y;
     laengdeAfvigelse = sqrt(A*A + B*B);
-    Serial.printf("laengdeAfvigelse: %.2f \t", laengdeAfvigelse);
+    Serial.printf("\n laengdeAfvigelse: %.2f \t", laengdeAfvigelse);
     return laengdeAfvigelse;
   }
   else {

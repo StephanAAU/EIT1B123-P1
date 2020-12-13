@@ -34,6 +34,8 @@ struct DistortionValues {
   float sX; // scale
   float sY;
   float sZ;
+  
+  bool set;
 };
 
 bool compassSetup(bool master);

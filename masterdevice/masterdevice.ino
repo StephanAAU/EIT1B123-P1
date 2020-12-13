@@ -37,27 +37,37 @@ masterData sendData;
 slaveData recvData;
 esp_now_peer_info_t peerInfo;
 
+float masterVinkel;
+
+struct DistortionValues distortionValues;
+
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-  Serial.print("\r\nLast Packet Send Status:\t");
+  //Serial.print("\r\nLast Packet Send Status:\t");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&recvData, incomingData, sizeof(recvData));
-  Serial.print("Bytes received: ");
-  Serial.println(len);
+  //Serial.print("Bytes received: ");
+  //Serial.println(len);
+  Serial.print("\n slave: ");
+  Serial.print(recvData.status);
 }
 
 void sendDataFunc() {
-  Serial.printf("Sending cmd:%s a:%i h:%.2f r:%.2f k:%.2f l:%.2f g:%.2f v:%.2f", sendData.cmd.c_str(), sendData.arg1, sendData.liftHeight, sendData.kegleRadius, sendData.beregnAfstandTilKegle, sendData.laengdeAfvigelse, sendData.stepLockGrader, sendData.drejeKegleVinkel);
+  Serial.printf("\n Sending cmd:%s a:%i h:%.2f r:%.2f k:%.2f l:%.2f g:%.2f v:%.2f \n", sendData.cmd.c_str(), sendData.arg1, sendData.liftHeight, sendData.kegleRadius, sendData.beregnAfstandTilKegle, sendData.laengdeAfvigelse, sendData.stepLockGrader, sendData.drejeKegleVinkel);
+  //Serial.printf("\n Sending cmd:%s a:%i \n", sendData.cmd.c_str(), sendData.arg1);
+  //Serial.printf("\n Sending cmd:%s \t a:%i \t h:%.2f \t r:%.2f \n", sendData.cmd.c_str(), sendData.arg1, sendData.liftHeight, sendData.kegleRadius);
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &sendData, sizeof(sendData));
 
+/*
   if (result == ESP_OK) {
     Serial.println("Sent with success");
   }
   else {
     Serial.println("Error sending the data");
   }
+*/
   // Nulstil data.
   sendData.cmd = "standby";
   sendData.arg1 = 0;
@@ -95,18 +105,22 @@ void espNowSetup() {
 void setup () {
   Serial.begin(115200);
 
+  pinMode(4, OUTPUT);
+  digitalWrite(4, HIGH);
   Serial.println("Starting device...");
   WiFi.mode(WIFI_STA);
   Serial.println(WiFi.macAddress());
 
+  pinMode(KEY_BUILTIN, INPUT);
+
   espNowSetup();
+  stepperSetup();
 
   initRangefinders();
 
-  stepperSetup();
-
   compassSetup(true);
 
+  sendData.cmd = "standby";
   sendData.liftHeight = 1;
   sendData.kegleRadius = 2;
   sendData.beregnAfstandTilKegle = 3;
@@ -120,7 +134,7 @@ void lokaliserKegle() {
   medUret();
   modUret();
   sendData.laengdeAfvigelse = findAfvigendeLaengde(sendData.kegleRadius);
-  sendData.drejeKegleVinkel = (recvData.kegleVinkel - getCompassHeading(NULL)) + findDrejeVinkel();
+  sendData.drejeKegleVinkel = findDrejeVinkel();
   resetVinkel();
 }
 
@@ -140,7 +154,7 @@ void checkSerial() {
   }
 
   // Debug kommando'er som håndteres ens.
-  if (cmd == "motorsRun" || cmd == "stopMotors" || cmd == "turn" || cmd == "drive" || cmd == "calibrate") {
+  if (cmd == "motorsRun" || cmd == "stopMotors" || cmd == "turn" || cmd == "drive" || cmd == "calibrate" || cmd == "turnCompass") {
     sendData.cmd = cmd;
     sendData.arg1 = argument.toInt();
     sendDataFunc();
@@ -162,15 +176,58 @@ void checkSerial() {
     sendDataFunc();
   }
 
+  // Print Slave kompas kommando.
+    if (cmd == "slaveCompas") {
+    Serial.printf("\n Slave compass heading: %.2f", recvData.kegleVinkel);
+  }
+
   // Debug kommando til kegle lokation.
   if (cmd == "find") {
     lokaliserKegle();
   }
 
+  if (cmd == "calibrateMaster")  {
+    Serial.println("master calibrating...");
+
+    struct MinMaxVector mmv;
+
+    int i = 0;
+    while (i < 200) {
+      sensors_event_t e = getCompassEvent();
+      updateMinMaxVector(&mmv, &e);
+      //getCompassPoint(&e); FOR BILAG 21
+      delay(10); // 100 compass samples per second
+      while (digitalRead(KEY_BUILTIN)) {  }
+      i++;
+      Serial.println("sampled...");
+    }
+    struct DistortionValues dv = getDistortionValues(&mmv);
+    dv.set = true;
+
+    distortionValues = dv;
+    
+    Serial.println("done master calibrating.");
+  }
+
+  if (cmd == "radiusTest") {
+    sendData.liftHeight = afstandTilLift();
+    sendData.kegleRadius = beregnAfstandTilKegle(sendData.liftHeight);
+    Serial.printf("%.2f \t %.2f \n", sendData.liftHeight, sendData.kegleRadius);
+    sendData.cmd = "drive";
+    sendData.arg1 = sendData.kegleRadius;
+    sendDataFunc();
+  }
+  
   // Kommando til at starte normal drift.
   if (cmd == "start") {
+    Serial.println("Starter programmet...");
+    delay(100);
     progCnt = 1;
   }
+  
+  serialData = "";
+  cmd = "";
+  argument = "";
 }
 
 void loop () {
@@ -188,28 +245,33 @@ void loop () {
     sidsteLiftH = sendData.liftHeight;
     sendData.liftHeight = afstandTilLift();
     sendData.kegleRadius = beregnAfstandTilKegle(sendData.liftHeight);
+    //masterVinkel = getCompassHeading(&distortionValues);
     prevMillis200ms = currMillis;
-    Serial.printf("l: %.2f \t k: %.2f \n", sendData.liftHeight, afstandTilKegle());
+    printStatus = true;
+    //Serial.printf("l: %.2f \t k: %.2f \t %.2f \n", sendData.liftHeight, afstandTilKegle(), sendData.kegleRadius);
   }
 
   switch (progCnt)
   {
     case 1: // Step 1 er en scanning efter keglen.
-      Serial.println("Case 1 - Lokalisere kegle.");
+      Serial.println("case 1 ");
       lokaliserKegle();
       progCnt = 2;
       break;
 
     case 2: // Step 2 er vurdering af om afstands afvigelsen er høj nok til at kræve justering.
-      Serial.print("Case 2 - Afvigelsesvurdering");
+      Serial.print("case 2");
       // Hvis kegleposition er ok gå til case 4.
       if ((sendData.laengdeAfvigelse < (1 * minKegleAfvigelse)) && (sendData.laengdeAfvigelse > (-1 * minKegleAfvigelse))) {
         progCnt = 4;
-        Serial.print("Sender videre til case 4");
+        Serial.print("goto 4 \n");
         // Hvis kegle position ikke er ok og keglen ikke er igang med at dreje.
       } else if ((recvData.status != "turning") && (recvData.status != "done")) {
+        Serial.print("turning \t");
         sendData.cmd = "turnKegle";
+        recvData.status = "turning";
         sendDataFunc();
+        delay(200);
       } else if (recvData.status == "turning") {
 
       }
@@ -217,15 +279,17 @@ void loop () {
       if (recvData.status == "done") {
         progCnt = 3;
         recvData.status = "";
+        delay(200);
       }
       break;
 
     case 3:
       // Sæt keglen igang med at køre fremad, hvis den ikke er igang med dette.
-      Serial.print("case 3");
+      Serial.print("case 3 ");
       if ((recvData.status != "driving") && (recvData.status != "done")) {
         sendData.cmd = "driveKegle";
         sendDataFunc();
+        delay(200);
       }
       // Main loop kører denne case ind til done status modtages.
       if (recvData.status == "done") {
@@ -234,7 +298,7 @@ void loop () {
       break;
 
     case 4:
-      Serial.print("case 4");
+      //Serial.print("case 4");
       float forskel;
       forskel = abs(sendData.liftHeight - sidsteLiftH);
 
@@ -243,13 +307,16 @@ void loop () {
         while ((abs(afstandTilLift() - sidsteLiftH) > forskel)) {
           sidsteLiftH = afstandTilLift();
           Serial.printf("Ikke stabiliseret nok; %.2f \t", sidsteLiftH);
+          delay(500);
         }
+        Serial.println("Højde stabiliseret - starter sekvens...");
         progCnt = 1;
       } else {
+        /*
         if ((currMillis - prevMillis1000ms) >= 200) {
-          Serial.println("Afventer lifthøjde ændring...");
+          //Serial.println("Afventer lifthøjde ændring...");
           prevMillis1000ms = currMillis;
-        }
+        }*/
       }
       break;
 

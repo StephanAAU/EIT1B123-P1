@@ -14,6 +14,6 @@ const int stepsPerRevolution = 400;
 const float minKegleAfvigelse = 50; // Afvigelse i mm
 
 // Defines til lift ændring
-const float minLiftForskel = 25; // Afvigelse i mm
+const float minLiftForskel = 80; // Afvigelse i mm
 
 #endif
