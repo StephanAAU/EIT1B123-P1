@@ -45,10 +45,11 @@ void drive(int mm) {
 
   driving = true;
 
-  int k = (mm/100) * 400; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
+  float k = 3.57;
+  int ms = mm * k;
 
   driveStart = millis();
-  driveEnd = driveStart + k;
+  driveEnd = driveStart + ms;
 
   digitalWrite(MOTOR_INA1, LOW);
   digitalWrite(MOTOR_INB1, HIGH);
@@ -80,10 +81,11 @@ void turn(int deg) {
 
   turning = true;
 
-  int k = deg * 5; // constant will wary depending on DC-motors, PWM value, voltage, wheel size ect.
+  float k = 4.73;
+  int ms = deg * k;
 
   turnStart = millis();
-  turnEnd = turnStart + k;
+  turnEnd = turnStart + ms;
 
   if (deg >= 0) {
     digitalWrite(MOTOR_INA1, HIGH);

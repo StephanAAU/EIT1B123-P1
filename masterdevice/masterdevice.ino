@@ -247,7 +247,6 @@ void loop () {
     sendData.kegleRadius = beregnAfstandTilKegle(sendData.liftHeight);
     //masterVinkel = getCompassHeading(&distortionValues);
     prevMillis200ms = currMillis;
-    printStatus = true;
     //Serial.printf("l: %.2f \t k: %.2f \t %.2f \n", sendData.liftHeight, afstandTilKegle(), sendData.kegleRadius);
   }
 
