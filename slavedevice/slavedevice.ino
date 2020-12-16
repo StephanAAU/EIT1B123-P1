@@ -169,7 +169,7 @@ void loop() {
     struct MinMaxVector mmv;
 
     // turn around 5 times
-    turn(360*10);
+    turn(360*5);
 
     int i = 0;
     while (!verifyTurn()) {
@@ -223,12 +223,14 @@ void loop() {
   }
 
   // Blokerende funktion der drejer baseret på kompas
-  if (recvData.cmd == "turnCompass")  {   
+  if (recvData.cmd == "abe")  {   
     sendDataFunc(TURN);
-    turn(recvData.arg1);
     float startPos = getCompassHeading(&distortionValues);
+    float stopPos = recvData.arg1;
+    float turnDeg = abs(startPos + stopPos);
     delay(100);
-    while (abs(getCompassHeading(&distortionValues) - startPos) < recvData.arg1) { };
+    turn(-99999);
+    while (getCompassHeading(&distortionValues) < recvData.arg1) { };
     stopMotors();       
     sendDataFunc(DONE);
   }

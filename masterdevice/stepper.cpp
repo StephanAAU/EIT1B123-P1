@@ -16,13 +16,13 @@ void medUret() {
   digitalWrite(dirPin, LOW);
   delay(10);
   // Spin motor speed
-  for(int x = 0; x < stepsPerRevolution*0.75; x++)
+  for(int x = 0; x < stepsPerRevolution*0.5; x++)
   {
     findAfstand(x, &minValue, &stepLock);
     digitalWrite(stepPin, HIGH);
     delay(10);
     digitalWrite(stepPin, LOW);
-    delay(75);
+    delay(10);
   }
 }
 
@@ -31,13 +31,13 @@ void modUret() {
   digitalWrite(dirPin, HIGH);
   delay(10);
   // Spin motor speed
-  for(int x = stepsPerRevolution*0.75; x > 0; x--)
+  for(int x = stepsPerRevolution*0.5; x > 0; x--)
   {
     findAfstand(x, &minValue, &stepLock);
     digitalWrite(stepPin, HIGH);
     delay(10);
     digitalWrite(stepPin, LOW);
-    delay(75);
+    delay(10);
   }
 }
 
@@ -67,7 +67,7 @@ float findAfvigendeLaengde(float akselsVaerdi) {
 float findDrejeVinkel () {
   Serial.printf("stepLockGrader: %.2f \t", stepLockGrader);
   drejeKegleVinkel = atan(B/A);
-  drejeKegleVinkel = drejeKegleVinkel * 100;
+  drejeKegleVinkel = -1*(drejeKegleVinkel * 100);
   Serial.printf("drejeKegleVinkel: %.2f \n", drejeKegleVinkel);
   return drejeKegleVinkel;
 }

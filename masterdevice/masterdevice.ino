@@ -154,12 +154,19 @@ void checkSerial() {
   }
 
   // Debug kommando'er som håndteres ens.
-  if (cmd == "motorsRun" || cmd == "stopMotors" || cmd == "turn" || cmd == "drive" || cmd == "calibrate" || cmd == "turnCompass") {
+  if (cmd == "motorsRun" || cmd == "stopMotors" || cmd == "turn" || cmd == "drive" || cmd == "calibrate" || cmd == "abe" || cmd == "turnKegle" ) {
     sendData.cmd = cmd;
     sendData.arg1 = argument.toInt();
     sendDataFunc();
   }
 
+  // Omvendt dreje
+  if (cmd == "aturn") {
+    sendData.cmd = "turn";
+    sendData.arg1 = (argument.toInt()) * -1;
+    sendDataFunc();
+  }
+  
   // Debug kommando til at sende data.
   if (cmd == "ultraDist") {
     sendData.cmd = "ultraDist";
@@ -217,6 +224,10 @@ void checkSerial() {
     sendData.arg1 = sendData.kegleRadius;
     sendDataFunc();
   }
+
+  if (cmd == "ok") {
+    progCnt = 3;
+  }
   
   // Kommando til at starte normal drift.
   if (cmd == "start") {
@@ -247,7 +258,6 @@ void loop () {
     sendData.kegleRadius = beregnAfstandTilKegle(sendData.liftHeight);
     //masterVinkel = getCompassHeading(&distortionValues);
     prevMillis200ms = currMillis;
-    printStatus = true;
     //Serial.printf("l: %.2f \t k: %.2f \t %.2f \n", sendData.liftHeight, afstandTilKegle(), sendData.kegleRadius);
   }
 
@@ -260,7 +270,7 @@ void loop () {
       break;
 
     case 2: // Step 2 er vurdering af om afstands afvigelsen er høj nok til at kræve justering.
-      Serial.print("case 2");
+      //Serial.print("case 2");
       // Hvis kegleposition er ok gå til case 4.
       if ((sendData.laengdeAfvigelse < (1 * minKegleAfvigelse)) && (sendData.laengdeAfvigelse > (-1 * minKegleAfvigelse))) {
         progCnt = 4;
@@ -277,6 +287,12 @@ void loop () {
       }
       // Main loop køre denne case ind til standby status modtages.
       if (recvData.status == "done") {
+        Serial.println("Juster hjul");
+
+        while (progCnt == 2) {
+          checkSerial();
+        }
+        
         progCnt = 3;
         recvData.status = "";
         delay(200);
@@ -285,11 +301,11 @@ void loop () {
 
     case 3:
       // Sæt keglen igang med at køre fremad, hvis den ikke er igang med dette.
-      Serial.print("case 3 ");
+      //Serial.print("3, ");
       if ((recvData.status != "driving") && (recvData.status != "done")) {
         sendData.cmd = "driveKegle";
         sendDataFunc();
-        delay(200);
+        delay(100);
       }
       // Main loop kører denne case ind til done status modtages.
       if (recvData.status == "done") {
@@ -318,6 +334,10 @@ void loop () {
           prevMillis1000ms = currMillis;
         }*/
       }
+      break;
+
+      case 5:
+        
       break;
 
     default:
