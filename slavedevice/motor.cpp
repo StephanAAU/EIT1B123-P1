@@ -82,7 +82,7 @@ void turn(int deg) {
   turning = true;
 
   float k = 4.73;
-  int ms = deg * k;
+  int ms = abs(deg) * k;
 
   turnStart = millis();
   turnEnd = turnStart + ms;
