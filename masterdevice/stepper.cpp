@@ -41,7 +41,7 @@ void modUret() {
   }
 }
 
-float findAfvigendeLaengde(float akselsVaerdi) {
+float findAfvigendeLaengde(float radiusTilKegle) {
   float favPosition = 150 * 0.9;
   stepLockGrader = stepLock * 0.9;
   float stepLockRadian = 0;
@@ -50,10 +50,10 @@ float findAfvigendeLaengde(float akselsVaerdi) {
     stepLockRadian = (stepLockGrader * 3.14159) / 180;
     favPosition = (favPosition * 3.14159) / 180;
     x = cos(stepLockRadian) * minValue;
-    x2 = cos(favPosition) * akselsVaerdi;
+    x2 = cos(favPosition) * radiusTilKegle;
     A = x2 - x;
     y = sin(stepLockRadian) * minValue;
-    y2 = sin(favPosition) * akselsVaerdi;
+    y2 = sin(favPosition) * radiusTilKegle;
     B = y2 - y;
     laengdeAfvigelse = sqrt(A*A + B*B);
     Serial.printf("\n laengdeAfvigelse: %.2f \t", laengdeAfvigelse);

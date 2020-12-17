@@ -5,7 +5,7 @@ void stepperSetup();
 void medUret();
 void modUret();
 void findAfstand(int x);
-float findAfvigendeLaengde(float akselsVaerdi);
+float findAfvigendeLaengde(float radiusTilKegle);
 float findDrejeVinkel();
 void resetVinkel();
 void testSensor();
